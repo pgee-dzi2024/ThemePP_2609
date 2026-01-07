@@ -1,0 +1,103 @@
+Страхотна тема. За целите на дипломната работа можеш да започнеш с лесен, минимален пример, който използва Django за уеб интерфейс и Python с библиотеката ReportLab за генериране на PDF certificate-и върху шаблон. По-долу ти давам кратък план и готов минимален проект, който добре се вписва в PyCharm и е подходящ за ученик в 12 клас.
+
+Какво ще прави минималният пример
+- Django уеб приложение, което:
+  - приема Excel/CSV файл с имена (и произволни допълнителни полета)
+  - позволява избор на фонов шаблон (background image)
+  - генерира персонализирани PDF сертификати за всеки ред
+  - пакетира PDF-файловете в ZIP и ги предлага за сваляне
+- Използвана библиотека за PDF: ReportLab (лесна за стартиране, добра за точни координати)
+- За входни данни: pandas (за удобна обработка на Excel/CSV)
+
+Препоръчителна архитектура
+- Django project (certificate_project)
+- Django app (certs)
+- static templates/ или media за качване на файлове
+- pdf_generation.py – модул с функция за генериране на PDF
+- views.py – обработва качването на файл, шаблона и стартира генерирането
+- urls.py – пътища за форма за качване и за сваляне на ZIP
+
+Минимален готов код (пълен набор за начинаещ)
+1) Инсталиране на зависимости
+- В виртуална среда:
+  - pip install django pandas openpyxl reportlab
+
+2) Структура на проекта
+- certificate_project/
+  - manage.py
+  - certificate_project/
+    - settings.py
+    - urls.py
+    - wsgi.py
+  - certs/
+    - __init__.py
+    - models.py (ако решиш да добавиш, не е задължително за минимално)
+    - views.py
+    - pdf_generation.py
+    - templates/
+      - upload.html
+    - static/  (опционално)
+  - data/  (за примерни файлове)
+  - templates_images/
+    - certificate_template.png
+
+3) certs/pdf_generation.py
+from pathlib import Path
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.utils import ImageReader
+
+def generate_pdf_for_row(row, pdf_path, background_path):
+    width, height = A4
+    c = canvas.Canvas(str(pdf_path), pagesize=A4)
+
+    # фон
+    c.drawImage(ImageReader(str(background_path)), 0, 0, width=width, height=height)
+
+    name = str(row.get("name", "Участник"))
+    course = str(row.get("course", "Курс"))
+    date = str(row.get("date", ""))
+
+    # просто координати (адаптирай според шаблона)
+    c.setFont("Helvetica-Bold", 28)
+    c.drawString(100, height - 180, name)
+
+    c.setFont("Helvetica", 20)
+    c.drawString(100, height - 210, course)
+    c.drawString(100, height - 240, date)
+
+    c.showPage()
+    c.save()
+
+4) certs/views.py
+from pathlib import Path
+import io
+import pandas as pd
+from django.shortcuts import render
+from django.http import HttpResponse
+from .pdf_generation import generate_pdf_for_row
+from zipfile import ZipFile
+
+BASE = Path(__file__).resolve().parents[1]
+EXCEL_PATH = BASE / "data" / "participants.xlsx"
+BACKGROUND_PATH = BASE / "templates_images" / "certificate_template.png"
+OUTPUT_DIR = BASE / "output"
+OUTPUT_DIR.mkdir(exist_ok=True)
+
+def upload_view(request):
+    if request.method == "POST":
+        # файлът с участниците
+        uploaded = request.FILES.get("datafile")
+        template_choice = request.POST.get("template", "default")
+        # временно записване на качения файл
+        temp_path = OUTPUT_DIR / "participants_upload.xlsx"
+        with open(temp_path, "wb") as f:
+            for chunk in uploaded.chunks():
+                f.write(chunk)
+
+        df = pd.read_excel(temp_path, engine="openpyxl")
+
+        # за всеки ред генерираме PDF
+        for idx, (_, row) in enumerate(df.iterrows(), start=1):
+            pdf_path = OUTPUT_DIR / f"certificate_{idx:03d}.pdf"
+            generate
