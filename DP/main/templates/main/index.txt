@@ -1,0 +1,185 @@
+{% extends 'main/base.html' %}
+{% load static %}
+            {% block content %}
+            <div id="app">
+                <!-- Header -->
+				<div id="header-wrapper">
+					<header id="header" class="container">
+						<!-- Logo -->
+							<div id="logo">
+								<h1><a href="index.html">PDF генератор</a></h1>
+								<span>на сертификати</span>
+							</div>
+
+					</header>
+				</div>
+                <!-- Начален екран -->
+                <div v-if="showMode==='home'">
+                    <!-- Banner -->
+                        <div id="banner-wrapper">
+                            <div id="banner" class="box container">
+                                <div class="row">
+                                    <div class="col-6 col-12-medium">
+                                        <h3>Добре дошли </h3>
+                                        <p>в системата за генериране на сертификати на базата на PDF шаблони</p>
+                                    </div>
+                                    <div class="col-6 col-12-medium"
+                                         style="display: flex; flex-direction: column; justify-content: flex-end;">
+                                        <button class="button icon solid fa-question-circle"
+                                                @click="showMode='help'">
+                                            Виж повече ...
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <!-- избор на шаблон -->
+                        <div id="features-wrapper">
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-4 col-12-medium">
+                                        <!-- Box -->
+                                            <section class="box feature">
+                                                <a href="#" class="image featured">
+                                                    <img src="{% static 'images/pic01.jpg' %}" alt=""/>
+                                                </a>
+                                                <div class="inner">
+                                                    <header>
+                                                        <h2>Put something here</h2>
+                                                        <p>Maybe here as well I think</p>
+                                                    </header>
+                                                    <p>Phasellus quam turpis, feugiat sit amet in, hendrerit in lectus.
+                                                        Praesent sed semper amet bibendum tristique fringilla.</p>
+                                                    <button class="button icon solid fa-arrow-circle-right" @click="showMode=1">
+                                                        Генерирай
+                                                    </button>
+                                                </div>
+                                            </section>
+                                    </div>
+                                    <div class="col-4 col-12-medium">
+
+                                        <!-- Box -->
+                                            <section class="box feature">
+                                                <a href="#" class="image featured"><img src="{% static 'images/pic02.jpg' %}"
+                                                                                        alt=""/></a>
+                                                <div class="inner">
+                                                    <header>
+                                                        <h2>An interesting title</h2>
+                                                        <p>This is also an interesting subtitle</p>
+                                                    </header>
+                                                    <p>Phasellus quam turpis, feugiat sit amet in, hendrerit in lectus. Praesent sed semper amet bibendum tristique fringilla.</p>
+                                                </div>
+                                            </section>
+
+                                    </div>
+                                    <div class="col-4 col-12-medium">
+
+                                        <!-- Box -->
+                                            <section class="box feature">
+                                                <a href="#" class="image featured"><img src="{% static 'images/pic03.jpg' %}"
+                                                                                        alt=""/></a>
+                                                <div class="inner">
+                                                    <header>
+                                                        <h2>Oh, and finally ...</h2>
+                                                        <p>Here's another intriguing subtitle</p>
+                                                    </header>
+                                                    <p>Phasellus quam turpis, feugiat sit amet in, hendrerit in lectus. Praesent sed semper amet bibendum tristique fringilla.</p>
+                                                </div>
+                                            </section>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+                <!-- Помощ/пояснения -->
+                <div id="main-wrapper" v-if="showMode==='help'">
+                    <div class="container">
+                        <div class="row gtr-200">
+                            <div class="col-12 imp-medium">
+                                <!-- Content -->
+                                    <div id="content">
+                                        <section class="last">
+                                            <h2>Упътване за работа</h2>
+                                            <p style="text-align: justify">Практическата част представлява работещо приложение „Система за издаване
+                                                на сертификати“ с административен интерфейс за качване на списък, избор
+                                                на шаблон и генериране на PDF документи. Приложението реализира следните
+                                                функционалности: качване на списък с имена - поддръжка на поне един
+                                                табличен формат (.xlsx или .csv) и/или текстов файл (.txt) с по един
+                                                участник на ред; преглед и валидация на данните - показване на заредените
+                                                записи (таблица), проверка за празни редове, дубликати и невалидни символи
+                                                и подаване на разбираеми съобщения при грешка; избор на шаблон; настройка
+                                                на позициониране - задаване на координати/стил за текста (име, дата,
+                                                номер на сертификат и др.); генериране на персонализирани PDF -
+                                                автоматично създаване на отделен PDF файл за всеки участник, съдържащ
+                                                шаблона и персонализирания текст; сваляне на резултата -  възможност за
+                                                изтегляне на единичен сертификат и/или пакет (ZIP) с всички генерирани
+                                                PDF файлове.</p>
+                                            <p>Приложението може да се демонстрира на локална машина или тестов сървър,
+                                                с кратки инструкции за стартиране и примерен входен файл.</p>
+                                        </section>
+                                        <div style="text-align: center">
+                                            <button class="button icon solid fa-arrow-circle-up"
+                                                    @click="showMode='home'">
+                                                Затвори
+                                            </button>
+                                        </div>
+                                    </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Main -->
+                <div id="main-wrapper" v-if="showMode===1">
+                    <div class="container">
+                        <div class="row gtr-200">
+                            <div class="col-4 col-12-medium">
+
+                                <!-- Sidebar -->
+                                    <div id="sidebar">
+                                        <section class="widget thumbnails">
+                                            <h3>Interesting stuff</h3>
+                                            <div class="grid">
+                                                <div class="row gtr-50">
+                                                    <div class="col-6"><a href="#" class="image fit"><img
+                                                            src="{% static 'images/pic04.jpg' %}" alt=""/></a></div>
+                                                    <div class="col-6"><a href="#" class="image fit"><img
+                                                            src="{% static 'images/pic05.jpg' %}" alt=""/></a></div>
+                                                    <div class="col-6"><a href="#" class="image fit"><img
+                                                            src="{% static 'images/pic06.jpg' %}" alt=""/></a></div>
+                                                    <div class="col-6"><a href="#" class="image fit"><img
+                                                            src="{% static 'images/pic07.jpg' %}" alt=""/></a></div>
+                                                </div>
+                                            </div>
+                                            <a href="#" class="button icon fa-file-alt">More</a>
+                                        </section>
+                                    </div>
+
+                            </div>
+                            <div class="col-8 col-12-medium imp-medium">
+
+                                <!-- Content -->
+                                    <div id="content">
+                                        <section class="last">
+                                            <h2>So what's this all about?</h2>
+                                            <p>This is <strong>Verti</strong>, a free and fully responsive HTML5 site template by
+                                                <a href="http://html5up.net">HTML5 UP</a>.
+                                            Verti is released under the
+                                                <a href="http://html5up.net/license">Creative Commons Attribution license</a>,
+                                                so feel free to use it for any personal or commercial project you might
+                                                have going on (just don't forget to credit us for the design!)</p>
+                                            <p>Phasellus quam turpis, feugiat sit amet ornare in, hendrerit in lectus.
+                                                Praesent semper bibendum ipsum, et tristique augue fringilla eu. Vivamus
+                                                id risus vel dolor auctor euismod quis eget mi. Etiam eu ante risus.
+                                                Aliquam erat volutpat. Aliquam luctus mattis lectus sit amet phasellus quam turpis.</p>
+                                            <a href="#" class="button icon solid fa-arrow-circle-right" @click="showMode='home'">Continue Reading</a>
+                                        </section>
+                                    </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endblock %}

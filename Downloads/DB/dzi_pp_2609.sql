@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Време на генериране: 10 фев 2026 в 23:37
+-- Време на генериране: 11 март 2026 в 23:49
 -- Версия на сървъра: 10.4.32-MariaDB
 -- Версия на PHP: 8.2.12
 
@@ -85,7 +85,11 @@ INSERT INTO `auth_permission` (`id`, `name`, `content_type_id`, `codename`) VALU
 (21, 'Can add session', 6, 'add_session'),
 (22, 'Can change session', 6, 'change_session'),
 (23, 'Can delete session', 6, 'delete_session'),
-(24, 'Can view session', 6, 'view_session');
+(24, 'Can view session', 6, 'view_session'),
+(25, 'Can add certificate template', 7, 'add_certificatetemplate'),
+(26, 'Can change certificate template', 7, 'change_certificatetemplate'),
+(27, 'Can delete certificate template', 7, 'delete_certificatetemplate'),
+(28, 'Can view certificate template', 7, 'view_certificatetemplate');
 
 -- --------------------------------------------------------
 
@@ -177,6 +181,7 @@ INSERT INTO `django_content_type` (`id`, `app_label`, `model`) VALUES
 (2, 'auth', 'permission'),
 (4, 'auth', 'user'),
 (5, 'contenttypes', 'contenttype'),
+(7, 'main', 'certificatetemplate'),
 (6, 'sessions', 'session');
 
 -- --------------------------------------------------------
@@ -214,7 +219,9 @@ INSERT INTO `django_migrations` (`id`, `app`, `name`, `applied`) VALUES
 (15, 'auth', '0010_alter_group_name_max_length', '2026-02-10 01:48:38.509179'),
 (16, 'auth', '0011_update_proxy_permissions', '2026-02-10 01:48:38.517217'),
 (17, 'auth', '0012_alter_user_first_name_max_length', '2026-02-10 01:48:38.529093'),
-(18, 'sessions', '0001_initial', '2026-02-10 01:48:38.556272');
+(18, 'sessions', '0001_initial', '2026-02-10 01:48:38.556272'),
+(19, 'main', '0001_initial', '2026-03-11 19:07:12.136716'),
+(20, 'main', '0002_certificatetemplate_description_and_more', '2026-03-11 22:36:30.497546');
 
 -- --------------------------------------------------------
 
@@ -226,6 +233,21 @@ CREATE TABLE `django_session` (
   `session_key` varchar(40) NOT NULL,
   `session_data` longtext NOT NULL,
   `expire_date` datetime(6) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Структура на таблица `main_certificatetemplate`
+--
+
+CREATE TABLE `main_certificatetemplate` (
+  `id` bigint(20) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `file` varchar(100) NOT NULL,
+  `uploaded_at` datetime(6) NOT NULL,
+  `description` longtext DEFAULT NULL,
+  `preview_image` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -306,6 +328,12 @@ ALTER TABLE `django_session`
   ADD KEY `django_session_expire_date_a5c62663` (`expire_date`);
 
 --
+-- Индекси за таблица `main_certificatetemplate`
+--
+ALTER TABLE `main_certificatetemplate`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -325,7 +353,7 @@ ALTER TABLE `auth_group_permissions`
 -- AUTO_INCREMENT for table `auth_permission`
 --
 ALTER TABLE `auth_permission`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `auth_user`
@@ -355,13 +383,19 @@ ALTER TABLE `django_admin_log`
 -- AUTO_INCREMENT for table `django_content_type`
 --
 ALTER TABLE `django_content_type`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `django_migrations`
 --
 ALTER TABLE `django_migrations`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `main_certificatetemplate`
+--
+ALTER TABLE `main_certificatetemplate`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
 -- Ограничения за дъмпнати таблици
