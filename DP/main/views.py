@@ -11,7 +11,6 @@ import os
 import zipfile
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
-from rest_framework import status
 from .serializers import GenerateRequestSerializer
 
 # Импорти за PDF обработка
@@ -94,28 +93,28 @@ class GenerateCertificatesAPIView(APIView):
             zip_buffer = io.BytesIO()
 
             with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-                for index, participant in enumerate(participants):
+                for idx, participant in enumerate(participants):
                     packet = io.BytesIO()
                     c = canvas.Canvas(packet, pagesize=landscape(A4))
 
                     # Извличане на настройките от фронтенда
-                    settings = serializer.validated_data.get('text_settings', {})
-                    name_conf = settings.get('name', {'x': 420, 'y': 300, 'size': 36, 'show': True})
-                    course_conf = settings.get('course', {'x': 420, 'y': 240, 'size': 18, 'show': True})
-                    date_conf = settings.get('date', {'x': 600, 'y': 150, 'size': 18, 'show': True})
+                    text_settings = serializer.validated_data.get('text_settings', {})
+                    name_conf = text_settings.get('name', {'x': 420, 'y': 300, 'size': 36, 'show': True})
+                    course_conf = text_settings.get('course', {'x': 420, 'y': 240, 'size': 18, 'show': True})
+                    date_conf = text_settings.get('date', {'x': 600, 'y': 150, 'size': 18, 'show': True})
 
                     # Рисуване на ИМЕ
                     if name_conf.get('show'):
                         c.setFont('Arial-Cyrillic', int(name_conf.get('size', 36)))
-                        name_text = participant.get('Име') or participant.get('Name') or f"Участник_{index + 1}"
+                        name_text = participant.get('Име') or participant.get('Name') or f"Участник_{idx + 1}"
                         # drawCentredString центрира текста спрямо X координатата
                         c.drawCentredString(int(name_conf.get('x')), int(name_conf.get('y')), str(name_text))
 
                     # Рисуване на КУРС / ТЕМА
-                    if course_conf.get('show') and 'Курс' in participant:
+                    if course_conf.get('show') and 'Тема' in participant:
                         c.setFont('Arial-Cyrillic', int(course_conf.get('size', 18)))
                         c.drawCentredString(int(course_conf.get('x')), int(course_conf.get('y')),
-                                            str(participant['Курс']))
+                                            str(participant['Тема']))
 
                     # Рисуване на ДАТА
                     if date_conf.get('show') and 'Дата' in participant:
@@ -142,7 +141,7 @@ class GenerateCertificatesAPIView(APIView):
                     output.write(cert_buffer)
 
                     # 5. Добавяне в ZIP файла
-                    safe_name = str(name).replace(" ", "_").replace("/", "-")
+                    safe_name = str(name_text).replace(" ", "_").replace("/", "-")
                     zip_file.writestr(f"Certificate_{safe_name}.pdf", cert_buffer.getvalue())
 
             # Запазване на ZIP архива в media папката
