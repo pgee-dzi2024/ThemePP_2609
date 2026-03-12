@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Време на генериране: 11 март 2026 в 23:49
+-- Време на генериране: 12 март 2026 в 12:18
 -- Версия на сървъра: 10.4.32-MariaDB
 -- Версия на PHP: 8.2.12
 
@@ -116,7 +116,7 @@ CREATE TABLE `auth_user` (
 --
 
 INSERT INTO `auth_user` (`id`, `password`, `last_login`, `is_superuser`, `username`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`) VALUES
-(1, 'pbkdf2_sha256$600000$oUajD2j6zPj950Y80DK0L6$E/TjtJRTF7NxjWpYXbwaJbyjMUddk1Z3NJK5vnx/2K8=', NULL, 1, 'user_26', '', '', '', 1, 1, '2026-02-10 01:50:41.496238');
+(1, 'pbkdf2_sha256$600000$oUajD2j6zPj950Y80DK0L6$E/TjtJRTF7NxjWpYXbwaJbyjMUddk1Z3NJK5vnx/2K8=', '2026-03-12 11:02:45.517599', 1, 'user_26', '', '', '', 1, 1, '2026-02-10 01:50:41.496238');
 
 -- --------------------------------------------------------
 
@@ -158,6 +158,13 @@ CREATE TABLE `django_admin_log` (
   `content_type_id` int(11) DEFAULT NULL,
   `user_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Схема на данните от таблица `django_admin_log`
+--
+
+INSERT INTO `django_admin_log` (`id`, `action_time`, `object_id`, `object_repr`, `action_flag`, `change_message`, `content_type_id`, `user_id`) VALUES
+(1, '2026-03-12 11:10:43.149431', '1', 'Рожден ден', 1, '[{\"added\": {}}]', 7, 1);
 
 -- --------------------------------------------------------
 
@@ -235,6 +242,13 @@ CREATE TABLE `django_session` (
   `expire_date` datetime(6) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Схема на данните от таблица `django_session`
+--
+
+INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES
+('fqkmr8vok18upie5cnivjgm0pv1und29', '.eJxVjEEOwiAQRe_C2hBARqxL9z0DmYEZqRpISrsy3l2bdKHb_977LxVxXUpcO89xyuqirDr8boTpwXUD-Y711nRqdZkn0puid9r12DI_r7v7d1Cwl2-dwGCyQh5OJI4Cs5eAZ0MyGO8NQRYKA4DPZECQQ3B8NJItMDsGVu8PCHc47A:1w0doT:x_pX0xvr-uo4efeFkKcB99pjurkCYYBqF1-a9cGcv1o', '2026-03-26 11:02:45.522697');
+
 -- --------------------------------------------------------
 
 --
@@ -249,6 +263,13 @@ CREATE TABLE `main_certificatetemplate` (
   `description` longtext DEFAULT NULL,
   `preview_image` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Схема на данните от таблица `main_certificatetemplate`
+--
+
+INSERT INTO `main_certificatetemplate` (`id`, `name`, `file`, `uploaded_at`, `description`, `preview_image`) VALUES
+(1, 'Рожден ден', 'templates/hbd.pdf', '2026-03-12 11:10:43.146315', 'snWDEWMDM QWDas:AS ASDL;Mas;sdA', 'templates/previews/s1.png');
 
 --
 -- Indexes for dumped tables
@@ -377,7 +398,7 @@ ALTER TABLE `auth_user_user_permissions`
 -- AUTO_INCREMENT for table `django_admin_log`
 --
 ALTER TABLE `django_admin_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `django_content_type`
@@ -395,7 +416,7 @@ ALTER TABLE `django_migrations`
 -- AUTO_INCREMENT for table `main_certificatetemplate`
 --
 ALTER TABLE `main_certificatetemplate`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Ограничения за дъмпнати таблици
