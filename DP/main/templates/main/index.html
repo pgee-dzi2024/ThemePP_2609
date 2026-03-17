@@ -51,7 +51,7 @@
                                                     <h2>[[ template.name ]]</h2>
                                                 </header>
                                                 <!-- Описание на шаблона -->
-                                                <p>[[ template.description || 'Няма добавено описание за този дизайн.' ]]</p>
+                                                <p>[[ template.description || '' ]]</p>
 
                                                 <!-- Бутон, който извиква функцията с ID-то на конкретния шаблон -->
                                                 <button class="button icon solid fa-arrow-circle-right" @click="goToGenerateMode(template.id)">
@@ -74,7 +74,7 @@
                     <div class="container">
                         <div class="row gtr-200">
                             <div class="col-12 imp-medium">
-                                <!-- Content -->
+                               <!-- Content -->
                                     <div id="content">
                                         <section class="last">
                                             <h2>Упътване за работа</h2>
@@ -86,8 +86,7 @@
                                                 След това приложението автоматично генерира персонализирани PDF сертификати – по един за всеки участник.
                                                 Накрая може да изтеглите отделен сертификат или ZIP архив с всички генерирани PDF файлове.
 </p>
-                                            <p>Приложението може да се демонстрира на локална машина или тестов сървър,
-                                                с кратки инструкции за стартиране и примерен входен файл.</p>
+
                                         </section>
                                         <div style="text-align: center">
                                             <button class="button icon solid fa-arrow-circle-up"
