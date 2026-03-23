@@ -34,58 +34,6 @@
                             </div>
                         </div>
                     <!-- избор на шаблон -->
-                        <div id="features-wrapper">
-                            <div class="container">
-                                <h4>Избор на шаблон:</h4>
-                                <div class="row">
-                                    <!-- Динамичен цикъл, който върти този div за всеки шаблон в масива templates -->
-                                    <div class="col-4 col-12-medium" v-for="template in templates" :key="template.id">
-                                        <section class="box feature">
-                                            <a href="#" class="image featured">
-                                                <!-- Динамично зареждане на снимката. Ако няма, ползваме примерна -->
-                                                <img :src="template.preview_image ? template.preview_image : '/static/images/pic01.jpg'" :alt="template.name"/>
-                                            </a>
-                                            <div class="inner">
-                                                <header>
-                                                    <!-- Име на шаблона -->
-                                                    <h2>[[ template.name ]]</h2>
-                                                </header>
-                                                <!-- Описание на шаблона -->
-                                                <p>[[ template.description || '' ]]</p>
-
-                                                <!-- Бутон, който извиква функцията с ID-то на конкретния шаблон -->
-                                                <button class="button icon solid fa-arrow-circle-right" @click="goToGenerateMode(template.id)">
-                                                   Генерирай с този шаблон
-                                                </button>
-                                            </div>
-                                        </section>
-                                    </div>
-
-                                    <!-- Съобщение, ако все още няма качени шаблони в базата -->
-                                    <div class="col-12" v-if="templates.length === 0">
-                                        <p style="text-align: center; color: #888;"><i>Все още няма добавени шаблони в системата.</i></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                </div>
-                <!-- Помощ/пояснения -->
-                <div id="help-wrapper" v-if="showMode==='help'">
-                    <div class="container">
-                        <div class="row gtr-200">
-                            <div class="col-12 imp-medium">
-                               <!-- Content -->
-                                    <div id="content">
-                                        <section class="last">
-                                            <h2>Упътване за работа</h2>
-                                            <p style="text-align: justify">
-
-                                                Приложението „Система за издаване на сертификати“ представлява PDF генератор на сертификати, което позволява
-                                                качване на списък с участници във формат `.xlsx`, `.csv` или `.txt`, като всеки ред съдържа отделно име.
-                                                По ваше желание може да се избере шаблон за сертификата и да настрои позиционирането на текста (име, дата, номер на сертификат и др.).
-                                                След това приложението автоматично генерира персонализирани PDF сертификати – по един за всеки участник.
-                                                Накрая може да изтеглите отделен сертификат или ZIP архив с всички генерирани PDF файлове.
-</p>
 
                                         </section>
                                         <div style="text-align: center">
@@ -293,4 +241,230 @@
                     </div>
                 </div>
             </div>
-            {% endblock %}
+            {% endblock content %}
+
+                <!-- Помощ/пояснения -->
+                <div id="help-wrapper" v-if="showMode==='help'">
+                    <div class="container">
+                        <div class="row gtr-200">
+                            <div class="col-12 imp-medium">
+                               <!-- Content -->
+                                    <div id="content">
+                                        <section class="last">
+                                            <h2>Упътване за работа</h2>
+                                            <p style="text-align: justify">
+
+                                                Приложението „Система за издаване на сертификати“ представлява PDF генератор на сертификати, което позволява
+                                                качване на списък с участници във формат `.xlsx`, `.csv` или `.txt`, като всеки ред съдържа отделно име.
+                                                По ваше желание може да се избере шаблон за сертификата и да настрои позиционирането на текста (име, дата, номер на сертификат и др.).
+                                                След това приложението автоматично генерира персонализирани PDF сертификати – по един за всеки участник.
+                                                Накрая може да изтеглите отделен сертификат или ZIP архив с всички генерирани PDF файлове.
+                                            </p>
+
+                                        </section>
+                                        <div style="text-align: center">
+                                            <button class="button icon solid fa-arrow-circle-up"
+                                                    @click="showMode='home'">
+                                                Затвори
+                                            </button>
+                                        </div>
+                                    </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Kачване и генериране -->
+                <div id="main-wrapper" v-if="showMode==='upload'">
+                    <div class="container">
+
+                        <!-- Съобщения за грешка или успех -->
+                        <div class="row" v-if="errorMessage || successMessage">
+                            <div class="col-12">
+                                <div v-if="errorMessage" style="background: #ffdddd; color: #d8000c; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                                    <strong>Грешка:</strong> [[ errorMessage ]]
+                                </div>
+                                <div v-if="successMessage" style="background: #ddffdd; color: #4F8A10; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                                    <strong>Успех!</strong> [[ successMessage ]] <br>
+                                    <a v-if="downloadUrl" :href="downloadUrl" class="button icon solid fa-download" style="margin-top: 10px;">
+                                        Изтегли сертификатите (ZIP)
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row gtr-200">
+                            <!-- Лява колона: Настройки и качване -->
+                            <div class="col-4 col-12-medium">
+                                <div id="sidebar">
+                                    <section class="widget">
+                                        <h3>1. Избор на шаблон</h3>
+                                        <select v-model="selectedTemplate" style="width: 100%; padding: 10px; margin-bottom: 20px;">
+                                            <option :value="null" disabled>-- Изберете дизайн --</option>
+                                            <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
+                                                [[ tpl.name ]]
+                                            </option>
+                                        </select>
+
+                                        <h3>2. Списък с участници</h3>
+                                        <p>Качете .xlsx, .csv или .txt файл.</p>
+                                        <input type="file" @change="handleFileUpload" accept=".csv, .xlsx, .txt" style="margin-bottom: 10px;" />
+
+                                        <button class="button icon solid fa-upload" @click="uploadList" :disabled="isLoading">
+                                            <span v-if="!isLoading">Зареди данните</span>
+                                            <span v-else>Зареждане...</span>
+                                        </button>
+                                    </section>
+                                    <!-- Секция за координати -->
+                                    <section class="widget" style="margin-top: 20px;">
+                                        <h3>3. Настройки на текста (X/Y)</h3>
+                                        <p style="font-size: 0.85em; margin-bottom: 10px;">
+                                            Настройте позицията на елементите спрямо долния ляв ъгъл на листа.
+                                        </p>
+
+                                        <!-- Настройки за ИМЕ -->
+                                        <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd;">
+                                            <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+                                                <input type="checkbox" v-model="textSettings.name.show"> Име на участник
+                                            </label>
+                                            <div style="display: flex; gap: 10px;" v-if="textSettings.name.show">
+                                                <div><small>X ос</small><input type="number" v-model="textSettings.name.x" style="width: 100%; padding: 3px;"></div>
+                                                <div><small>Y ос</small><input type="number" v-model="textSettings.name.y" style="width: 100%; padding: 3px;"></div>
+                                                <div><small>Размер</small><input type="number" v-model="textSettings.name.size" style="width: 100%; padding: 3px;"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Настройки за КУРС / ТЕМА -->
+                                        <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd;">
+                                            <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+                                                <input type="checkbox" v-model="textSettings.course.show"> Тема/Курс
+                                            </label>
+                                            <div style="display: flex; gap: 10px;" v-if="textSettings.course.show">
+                                                <div><small>X ос</small><input type="number" v-model="textSettings.course.x" style="width: 100%; padding: 3px;"></div>
+                                                <div><small>Y ос</small><input type="number" v-model="textSettings.course.y" style="width: 100%; padding: 3px;"></div>
+                                                <div><small>Размер</small><input type="number" v-model="textSettings.course.size" style="width: 100%; padding: 3px;"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Настройки за ДАТА -->
+                                        <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                                            <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+                                                <input type="checkbox" v-model="textSettings.date.show"> Дата
+                                            </label>
+                                            <div style="display: flex; gap: 10px;" v-if="textSettings.date.show">
+                                                <div><small>X ос</small><input type="number" v-model="textSettings.date.x" style="width: 100%; padding: 3px;"></div>
+                                                <div><small>Y ос</small><input type="number" v-model="textSettings.date.y" style="width: 100%; padding: 3px;"></div>
+                                                <div><small>Размер</small><input type="number" v-model="textSettings.date.size" style="width: 100%; padding: 3px;"></div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+
+                            <!-- Дясна колона: Валидация и таблица с данни -->
+                            <div class="col-8 col-12-medium imp-medium">
+                                <div id="content">
+                                    <section class="last">
+                                        <h2>3. Преглед и валидация</h2>
+
+                                        <div v-if="participants.length === 0">
+                                            <p><i>Все още няма заредени данни. Моля, качете файл от менюто вляво.</i></p>
+                                        </div>
+
+                                        <div v-else>
+                                            <p>Успешно заредени <strong>[[ participants.length ]]</strong> записа. Прегледайте списъка преди генериране.</p>
+
+                                            <div style="overflow-x: auto; max-height: 400px; margin-bottom: 20px;">
+                                                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                                    <thead>
+                                                        <tr style="border-bottom: 2px solid #ccc;">
+                                                            <th>#</th>
+                                                            <!-- Динамично генериране на колони според първия запис -->
+                                                            <th v-for="(value, key) in participants[0]" :key="key">[[ key ]]</th>
+                                                            <th>Действие</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr v-for="(p, index) in participants" :key="index" style="border-bottom: 1px solid #eee;">
+                                                            <td>[[ index + 1 ]]</td>
+                                                            <td v-for="(val, key) in p" :key="key">
+                                                                <input type="text" v-model="p[key]" style="width: 90%; padding: 5px;">
+                                                            </td>
+                                                            <td>
+                                                                <button @click="removeParticipant(index)" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                                                                    X
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <button class="button icon solid fa-cogs" @click="generateCertificates" :disabled="isLoading">
+                                                <span v-if="!isLoading">Генерирай сертификати</span>
+                                                <span v-else>Генериране... моля изчакайте</span>
+                                            </button>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 30px;">
+                            <button class="button alt icon solid fa-arrow-circle-left" @click="showMode='home'">Назад към начало</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- original -->
+                <div id="demo-wrapper" v-if="showMode===1">
+                    <div class="container">
+                        <div class="row gtr-200">
+                            <div class="col-4 col-12-medium">
+
+                                <!-- Sidebar -->
+                                    <div id="sidebar">
+                                        <section class="widget thumbnails">
+                                            <h3>Interesting stuff</h3>
+                                            <div class="grid">
+                                                <div class="row gtr-50">
+                                                    <div class="col-6"><a href="#" class="image fit"><img
+                                                            src="{% static 'images/pic04.jpg' %}" alt=""/></a></div>
+                                                    <div class="col-6"><a href="#" class="image fit"><img
+                                                            src="{% static 'images/pic05.jpg' %}" alt=""/></a></div>
+                                                    <div class="col-6"><a href="#" class="image fit"><img
+                                                            src="{% static 'images/pic06.jpg' %}" alt=""/></a></div>
+                                                    <div class="col-6"><a href="#" class="image fit"><img
+                                                            src="{% static 'images/pic07.jpg' %}" alt=""/></a></div>
+                                                </div>
+                                            </div>
+                                            <a href="#" class="button icon fa-file-alt">More</a>
+                                        </section>
+                                    </div>
+
+                            </div>
+                            <div class="col-8 col-12-medium imp-medium">
+
+                                <!-- Content -->
+                                    <div id="content">
+                                        <section class="last">
+                                            <h2>So what's this all about?</h2>
+                                            <p>This is <strong>Verti</strong>, a free and fully responsive HTML5 site template by
+                                                <a href="http://html5up.net">HTML5 UP</a>.
+                                            Verti is released under the
+                                                <a href="http://html5up.net/license">Creative Commons Attribution license</a>,
+                                                so feel free to use it for any personal or commercial project you might
+                                                have going on (just don't forget to credit us for the design!)</p>
+                                            <p>Phasellus quam turpis, feugiat sit amet ornare in, hendrerit in lectus.
+                                                Praesent semper bibendum ipsum, et tristique augue fringilla eu. Vivamus
+                                                id risus vel dolor auctor euismod quis eget mi. Etiam eu ante risus.
+                                                Aliquam erat volutpat. Aliquam luctus mattis lectus sit amet phasellus quam turpis.</p>
+                                            <a href="#" class="button icon solid fa-arrow-circle-right" @click="showMode='home'">Continue Reading</a>
+                                        </section>
+                                    </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endblock content %}
