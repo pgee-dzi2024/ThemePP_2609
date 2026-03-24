@@ -190,7 +190,7 @@
                     </div>
                 </div>
                 <!-- original -->
-                <div id="demo-wrapper" v-if="showMode===1">
+                <div v-if="showMode===1">
                     <div class="container">
                         <div class="row gtr-200">
                             <div class="col-4 col-12-medium">
@@ -222,12 +222,7 @@
                                     <div id="content">
                                         <section class="last">
                                             <h2>So what's this all about?</h2>
-                                            <p>This is <strong>Verti</strong>, a free and fully responsive HTML5 site template by
-                                                <a href="http://html5up.net">HTML5 UP</a>.
-                                            Verti is released under the
-                                                <a href="http://html5up.net/license">Creative Commons Attribution license</a>,
-                                                so feel free to use it for any personal or commercial project you might
-                                                have going on (just don't forget to credit us for the design!)</p>
+                                            <p></p>
                                             <p>Phasellus quam turpis, feugiat sit amet ornare in, hendrerit in lectus.
                                                 Praesent semper bibendum ipsum, et tristique augue fringilla eu. Vivamus
                                                 id risus vel dolor auctor euismod quis eget mi. Etiam eu ante risus.
@@ -241,10 +236,10 @@
                     </div>
                 </div>
             </div>
-            {% endblock content %}
+
 
                 <!-- Помощ/пояснения -->
-                <div id="help-wrapper" v-if="showMode==='help'">
+                <div v-if="showMode==='help'">
                     <div class="container">
                         <div class="row gtr-200">
                             <div class="col-12 imp-medium">
@@ -275,7 +270,7 @@
                     </div>
                 </div>
                 <!-- Kачване и генериране -->
-                <div id="main-wrapper" v-if="showMode==='upload'">
+                <div v-if="showMode==='upload'">
                     <div class="container">
 
                         <!-- Съобщения за грешка или успех -->
@@ -302,7 +297,13 @@
                                         <select v-model="selectedTemplate" style="width: 100%; padding: 10px; margin-bottom: 20px;">
                                             <option :value="null" disabled>-- Изберете дизайн --</option>
                                             <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
-                                                [[ tpl.name ]]
+                                                 Серитификат за признателност
+                                            </option>
+                                            <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
+                                                 Серитификат за участие
+                                            </option>
+                                            <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
+                                                 Серитификат за постижение
                                             </option>
                                         </select>
 
@@ -416,13 +417,13 @@
                     </div>
                 </div>
                 <!-- original -->
-                <div id="demo-wrapper" v-if="showMode===1">
+                <div v-if="showMode===1">
                     <div class="container">
                         <div class="row gtr-200">
                             <div class="col-4 col-12-medium">
 
                                 <!-- Sidebar -->
-                                    <div id="sidebar">
+                                    <div >
                                         <section class="widget thumbnails">
                                             <h3>Interesting stuff</h3>
                                             <div class="grid">
@@ -467,4 +468,4 @@
                     </div>
                 </div>
             </div>
-            {% endblock content %}
+            {% endblock %}
