@@ -1,0 +1,792 @@
+Задание тема 09.docx
+Document
+actions.js
+File
+index.txt
+File
+прикачил съм задание за дипломен проект. трябва да реализираме практическата част. спрял съм се на Python/Django/DRF за backend-а и vue.js(CDN)/axios/js във frontend-а. Мисля да се спра на SDI с визуалзиране на различни секции според конкретното действие и извикване на API функции, когато е необходимо. прикачил съм базов скрипт (скелет) за vue. направил съм и скелет на html шаблон, основната част от който е във прикачения .txt файл. дай план за работа
+Gemini 3.1 Pro
+Здравейте! Изборът на технологичен стек (Python + Django + DRF за бекенд и Vue.js + Axios за фронтенд) е отличен и изключително подходящ за съвременни уеб приложения. Подходът със Single Page Application (SPA/SDI), при който управлявате видимостта на секциите чрез състояния във Vue (напр. showMode), ще направи приложението много бързо и интерактивно.
+За да реализираме практическата част структурирано, ви предлагам следния план за работа, разделен на логически етапи:
+Етап 1: Подготовка и дизайн на архитектурата
+1.	Преглед на изискванията: Анализ на входните данни (формати .xlsx, .csv, .txt) и структурата на сертификата (име, дата, номер).
+2.	Проектиране на базата данни (Django Models):
+o	Модел Template: за съхранение на качените празни бланки (шаблони) за сертификати.
+o	Модел CertificateRecord: за съхранение на генерираните данни (опционално, ако искате да пазите история).
+o	Модел UploadedList: за временно или постоянно съхранение на файловете с имена.
+Етап 2: Изграждане на Бекенда (Django & DRF)
+1.	Инициализация: Създаване на Django проект и приложение (напр. config и certificates_app). Настройка на CORS, за да може фронтендът да комуникира с API-то.
+2.	Разработка на API endpoints (DRF):
+o	POST /api/upload/: Приемане на файл със списък от участници. Тук бекендът ще парсва файла (напр. чрез библиотеката pandas или вградените csv/openpyxl) и ще връща JSON масив с извлечените данни за валидация във фронтенда.
+o	GET /api/templates/: Връщане на списък с налични шаблони.
+o	POST /api/generate/: Приемане на валидираните данни и избрания шаблон. Тук ще се случва същинското генериране.
+3.	Логика за генериране на PDF: Интегриране на Python библиотека (като ReportLab, WeasyPrint или PyPDF2/pdfrw), която да взима шаблона и да "наслагва" текста (имена, дати, номера) върху него. Връщане на линк за изтегляне или директно на PDF файла (или ZIP архив, ако са много).
+Етап 3: Разработка на Фронтенда (Vue.js & HTML)
+1.	Интегриране на скелета: Свързване на вашия index.txt (HTML) и actions.js.
+o	Малка корекция за actions.js: В created() метода трябва да използвате this.showMode = 'home';, за да реферирате правилно към данните на инстанцията.
+2.	Управление на състоянията (State Management):
+o	Разширяване на data() обекта във Vue с нужните променливи: uploadedData (за масива с участници), selectedTemplate, isGenerating, errorMessages и др.
+o	Добавяне на методи за смяна на изгледите: goToUpload(), goToTemplates(), goToGenerate().
+3.	Реализация на компонентите/секциите:
+o	Секция Качване: Форма за избор на файл.
+o	Секция Валидация: Таблица (рендерирана чрез v-for), която показва върнатите от бекенда данни. Възможност за редакция или изтриване на невалидни редове.
+o	Секция Шаблони: Визуализация на наличните дизайни.
+o	Секция Генериране: Бутон, който изпраща финалната заявка чрез Axios и показва индикатор за зареждане, докато чака PDF файла.
+Етап 4: Интеграция и Тестване
+1.	Свързване на Vue и DRF чрез Axios: Добавяне на Axios заявките в методите на Vue (напр. uploadFile(), generateCertificates()).
+2.	Обработка на грешки: Визуализиране на съобщения, ако файлът е невалиден, липсват колони или има проблем със сървъра.
+3.	Тестване (End-to-End): Цялостно тестване на процеса от качване на Excel файл до изтегляне на генерираните сертификати.
+Етап 5: Финализиране и Документация
+1.	Изчистване на UI/UX (CSS стилизиране, добавяне на анимации при смяна на секциите).
+2.	Описване на практическата част в теоретичния документ на дипломната работа (обяснение на архитектурата, защо са избрани тези технологии, показване на откъси от кода).
+________________________________________
+Как да продължим?
+Ако сте съгласни с плана, можем да започнем стъпка по стъпка. Искате ли да стартираме с кода за Django моделите и DRF изгледите (Етап 2), или предпочитате първо да завършим и навържем Vue.js логиката с HTML скелета (Етап 3)?
+Нека да стартираме с кода за Django моделите и DRF изгледите (Етап 2)
+Gemini 3.1 Pro
+Чудесно! Нека започнем с изграждането на основата на бекенда с Django и DRF.
+За да реализираме логиката, ще са ни необходими няколко основни неща: модел за съхранение на шаблоните, сериализатори за преобразуване на данните и изгледи (Views) за обработка на качените файлове и генерирането на сертификати.
+Първо, уверете се, че имате инсталирани необходимите библиотеки във вашата виртуална среда:
+bash
+pip install django djangorestframework django-cors-headers pandas openpyxl
+(Бележка: pandas и openpyxl са нужни за лесното четене на .xlsx и .csv файлове).
+1. Модели (models.py)
+Ще създадем модел, който да съхранява шаблоните (празните бланки) за сертификатите.
+python
+from django.db import models
+
+class CertificateTemplate(models.db):
+    name = models.CharField(max_length=255, verbose_name="Име на шаблона")
+    file = models.FileField(upload_to='templates/', verbose_name="Файл на шаблона (PDF/Image)")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+2. Сериализатори (serializers.py)
+Сериализаторите ще ни помогнат да преобразуваме данните от базата в JSON формат за Vue.js, както и да валидираме входните данни при генерирането.
+python
+from rest_framework import serializers
+from .models import CertificateTemplate
+
+class TemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CertificateTemplate
+        fields = ['id', 'name', 'file', 'uploaded_at']
+
+# Този сериализатор ще се ползва само за валидация на заявката за генериране
+class GenerateRequestSerializer(serializers.Serializer):
+    template_id = serializers.IntegerField()
+    participants = serializers.ListField(
+        child=serializers.DictField() # Очакваме списък от обекти (напр. {"name": "Иван", "date": "10.05.2024"})
+    )
+3. Изгледи (Views - views.py)
+Тук се крие основната бизнес логика. Ще създадем три API ендпойнта:
+1.	За списък с шаблони.
+2.	За качване и парсване на списъка с участници (Excel/CSV/TXT).
+3.	За генериране на самите сертификати.
+python
+import pandas as pd
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, generics
+from .models import CertificateTemplate
+from .serializers import TemplateSerializer, GenerateRequestSerializer
+
+class TemplateListAPIView(generics.ListAPIView):
+    """
+    Връща списък с всички налични шаблони за сертификати.
+    GET /api/templates/
+    """
+    queryset = CertificateTemplate.objects.all()
+    serializer_class = TemplateSerializer
+
+class UploadParticipantsAPIView(APIView):
+    """
+    Приема файл (.xlsx, .csv, .txt) и връща масив с данни (JSON) към фронтенда за валидация.
+    POST /api/upload-participants/
+    """
+    def post(self, request, *args, **kwargs):
+        file_obj = request.FILES.get('file')
+
+        if not file_obj:
+            return Response({"error": "Моля, прикачете файл."}, status=status.HTTP_400_BAD_REQUEST)
+
+        file_name = file_obj.name.lower()
+
+        try:
+            # Парсване в зависимост от разширението на файла
+            if file_name.endswith('.xlsx'):
+                df = pd.read_excel(file_obj)
+            elif file_name.endswith('.csv'):
+                df = pd.read_csv(file_obj)
+            elif file_name.endswith('.txt'):
+                df = pd.read_csv(file_obj, sep='\t') # или друг разделител според заданието
+            else:
+                return Response({"error": "Неподдържан файлов формат."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Изчистване на празни редове и преобразуване в речник
+            df = df.dropna(how='all')
+            # Заменяме празни стойности (NaN) с празен стринг за по-лесна обработка във Vue
+            df = df.fillna('')
+
+            records = df.to_dict(orient='records')
+            return Response({"data": records}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": f"Грешка при обработка на файла: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GenerateCertificatesAPIView(APIView):
+    """
+    Приема валидирани данни от фронтенда и генерира сертификатите.
+    POST /api/generate/
+    """
+    def post(self, request, *args, **kwargs):
+        serializer = GenerateRequestSerializer(data=request.data)
+
+        if serializer.is_valid():
+            template_id = serializer.validated_data['template_id']
+            participants = serializer.validated_data['participants']
+
+            try:
+                template = CertificateTemplate.objects.get(id=template_id)
+            except CertificateTemplate.DoesNotExist:
+                return Response({"error": "Шаблонът не е намерен."}, status=status.HTTP_404_NOT_FOUND)
+
+            # ТУК: Логика за генериране на PDF (напр. с ReportLab или Pillow)
+            # За момента ще върнем само съобщение за успех
+
+            return Response({
+                "message": f"Успешно стартирано генериране на {len(participants)} сертификата.",
+                "download_url": "/media/generated/certificates.zip" # Примерен линк
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+4. Рутиране (urls.py)
+Свързваме изгледите с конкретни URL адреси:
+python
+from django.urls import path
+from .views import TemplateListAPIView, UploadParticipantsAPIView, GenerateCertificatesAPIView
+
+urlpatterns = [
+    path('api/templates/', TemplateListAPIView.as_view(), name='api_templates'),
+    path('api/upload-participants/', UploadParticipantsAPIView.as_view(), name='api_upload_participants'),
+    path('api/generate/', GenerateCertificatesAPIView.as_view(), name='api_generate_certificates'),
+]
+Какво постигаме с този код:
+1.	Фронтендът (Vue.js) ще може да изпрати .xlsx или .csv файл към /api/upload-participants/.
+2.	Бекендът (Django) ще го прочете чрез библиотеката pandas, ще го преобразува в JSON масив и ще го върне на Vue.js.
+3.	Потребителят ще може да види таблицата с участници на екрана, да ги валидира и да избере шаблон (списъкът с шаблони идва от /api/templates/).
+4.	Накрая Vue.js изпраща готовите данни и избрания шаблон към /api/generate/, където ще вградим самата PDF манипулация.
+Следваща стъпка:
+Искате ли да преминем към Етап 3 и да настроим Vue.js + Axios, за да можем да тестваме качването на файлове към това API, или предпочитате първо да разпишем и конкретната логика за рисуване/генериране на самия PDF файл в бекенда?
+да преминем към етап 3
+Gemini 3.1 Pro
+Чудесно! След като разгледах скелетите, които сте прикачили (actions.js и index.txt), виждам, че използвате хубав готов HTML дизайн (базиран на HTML5 UP) и управлявате изгледите чрез променливата showMode.
+Ще надградим тази структура. Ето какви промени ще направим:
+1.	В actions.js: Ще добавим нужните променливи в data() и методите за комуникация с бекенда чрез axios. Ще поправим и created хука.
+2.	В index.txt (HTML): Ще преобразим секцията showMode === 1 така, че да съдържа реалната форма за качване на списъка, преглед на върнатите данни (валидация) и бутон за стартиране на генерирането.
+Първо се уверете, че в main/base.html сте добавили CDN линкове за Vue 3 и Axios:
+html
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<!-- Вашият actions.js трябва да се зарежда след тях -->
+<script src="{% static 'js/actions.js' %}"></script>
+1. Обновяване на actions.js
+Ще добавим логика за качване на файл, извличане на шаблони и генериране.
+javascript
+const App = {
+    delimiters: ['[[', ']]'], // Променяме синтаксиса на [[ ]] заради Django шаблоните
+    data() {
+        return {
+            showMode: 'home',
+
+            // Данни за файлове и участници
+            selectedFile: null,
+            participants: [],
+
+            // Данни за шаблоните
+            templates: [],
+            selectedTemplate: null,
+
+            // Състояния и съобщения
+            isLoading: false,
+            errorMessage: '',
+            successMessage: '',
+            downloadUrl: ''
+        }
+    },
+    methods: {
+        // 1. Зареждане на наличните шаблони от бекенда
+        fetchTemplates() {
+            axios.get('/api/templates/')
+                .then(response => {
+                    this.templates = response.data;
+                })
+                .catch(error => {
+                    console.error("Грешка при зареждане на шаблони:", error);
+                    this.errorMessage = 'Неуспешно зареждане на шаблоните.';
+                });
+        },
+
+        // 2. Обработка на избора на файл от компютъра
+        handleFileUpload(event) {
+            this.selectedFile = event.target.files[0];
+            this.errorMessage = ''; // изчистване на стари грешки
+        },
+
+        // 3. Изпращане на файла към бекенда за парсване
+        uploadList() {
+            if (!this.selectedFile) {
+                this.errorMessage = "Моля, изберете файл първо!";
+                return;
+            }
+
+            this.isLoading = true;
+            let formData = new FormData();
+            formData.append('file', this.selectedFile);
+
+            axios.post('/api/upload-participants/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            .then(response => {
+                this.participants = response.data.data;
+                this.isLoading = false;
+            })
+            .catch(error => {
+                this.isLoading = false;
+                this.errorMessage = error.response?.data?.error || "Грешка при обработката на файла.";
+            });
+        },
+
+        // 4. Изтриване на участник от списъка (част от валидацията)
+        removeParticipant(index) {
+            this.participants.splice(index, 1);
+        },
+
+        // 5. Изпращане на заявка за финално генериране
+        generateCertificates() {
+            if (!this.selectedTemplate) {
+                this.errorMessage = "Моля, изберете шаблон за сертификата!";
+                return;
+            }
+            if (this.participants.length === 0) {
+                this.errorMessage = "Списъкът с участници е празен!";
+                return;
+            }
+
+            this.isLoading = true;
+            this.errorMessage = '';
+            this.successMessage = '';
+
+            const payload = {
+                template_id: this.selectedTemplate,
+                participants: this.participants
+            };
+
+            axios.post('/api/generate/', payload)
+                .then(response => {
+                    this.isLoading = false;
+                    this.successMessage = response.data.message;
+                    this.downloadUrl = response.data.download_url;
+                })
+                .catch(error => {
+                    this.isLoading = false;
+                    this.errorMessage = "Възникна грешка при генерирането.";
+                });
+        },
+
+        // Помощен метод за смяна на изгледа
+        goToGenerateMode(templateId = null) {
+            if (templateId) {
+                this.selectedTemplate = templateId;
+            }
+            this.showMode = 1; // Преминаваме към екрана за качване и генериране
+        }
+    },
+    created: function() {
+        this.showMode = 'home'; // Добавено е this.
+        this.fetchTemplates();  // Извикваме шаблоните при стартиране
+    }
+}
+
+Vue.createApp(App).mount('#app')
+2. Обновяване на HTML изгледа (index.txt)
+Ще подменим секцията <div id="main-wrapper" v-if="showMode===1"> с реален функционален интерфейс:
+html
+<!-- Main (Секция за качване и генериране) -->
+<div id="main-wrapper" v-if="showMode===1">
+    <div class="container">
+
+        <!-- Съобщения за грешка или успех -->
+        <div class="row" v-if="errorMessage || successMessage">
+            <div class="col-12">
+                <div v-if="errorMessage" style="background: #ffdddd; color: #d8000c; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <strong>Грешка:</strong> [[ errorMessage ]]
+                </div>
+                <div v-if="successMessage" style="background: #ddffdd; color: #4F8A10; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <strong>Успех!</strong> [[ successMessage ]] <br>
+                    <a v-if="downloadUrl" :href="downloadUrl" class="button icon solid fa-download" style="margin-top: 10px;">
+                        Изтегли сертификатите (ZIP)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row gtr-200">
+            <!-- Лява колона: Настройки и качване -->
+            <div class="col-4 col-12-medium">
+                <div id="sidebar">
+                    <section class="widget">
+                        <h3>1. Избор на шаблон</h3>
+                        <select v-model="selectedTemplate" style="width: 100%; padding: 10px; margin-bottom: 20px;">
+                            <option :value="null" disabled>-- Изберете дизайн --</option>
+                            <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
+                                [[ tpl.name ]]
+                            </option>
+                        </select>
+
+                        <h3>2. Списък с участници</h3>
+                        <p>Качете .xlsx, .csv или .txt файл.</p>
+                        <input type="file" @change="handleFileUpload" accept=".csv, .xlsx, .txt" style="margin-bottom: 10px;" />
+
+                        <button class="button icon solid fa-upload" @click="uploadList" :disabled="isLoading">
+                            <span v-if="!isLoading">Зареди данните</span>
+                            <span v-else>Зареждане...</span>
+                        </button>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Дясна колона: Валидация и таблица с данни -->
+            <div class="col-8 col-12-medium imp-medium">
+                <div id="content">
+                    <section class="last">
+                        <h2>3. Преглед и валидация</h2>
+
+                        <div v-if="participants.length === 0">
+                            <p><i>Все още няма заредени данни. Моля, качете файл от менюто вляво.</i></p>
+                        </div>
+
+                        <div v-else>
+                            <p>Успешно заредени <strong>[[ participants.length ]]</strong> записа. Прегледайте списъка преди генериране.</p>
+
+                            <div style="overflow-x: auto; max-height: 400px; margin-bottom: 20px;">
+                                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                    <thead>
+                                        <tr style="border-bottom: 2px solid #ccc;">
+                                            <th>#</th>
+                                            <!-- Динамично генериране на колони според първия запис -->
+                                            <th v-for="(value, key) in participants[0]" :key="key">[[ key ]]</th>
+                                            <th>Действие</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(p, index) in participants" :key="index" style="border-bottom: 1px solid #eee;">
+                                            <td>[[ index + 1 ]]</td>
+                                            <td v-for="(val, key) in p" :key="key">
+                                                <input type="text" v-model="p[key]" style="width: 90%; padding: 5px;">
+                                            </td>
+                                            <td>
+                                                <button @click="removeParticipant(index)" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                                                    X
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <button class="button icon solid fa-cogs" @click="generateCertificates" :disabled="isLoading">
+                                <span v-if="!isLoading">Генерирай сертификати</span>
+                                <span v-else>Генериране... моля изчакайте</span>
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="button alt icon solid fa-arrow-circle-left" @click="showMode='home'">Назад към начало</button>
+        </div>
+    </div>
+</div>
+Бонус съвет към бутоните в началния екран:
+В index.txt, където имате бутон Генерирай под примерните картинки, може да извикате метода goToGenerateMode() вместо само showMode=1.
+html
+<button class="button icon solid fa-arrow-circle-right" @click="goToGenerateMode(1)">
+   Генерирай с този шаблон
+</button>
+(Това ще навигира потребителя и автоматично ще избере шаблон с ID = 1 в падащото меню).
+Този подход създава динамична таблица: ако в Ексел файла имате колони Име, Курс, Дата, таблицата автоматично ще ги намери и покаже. Потребителят може дори да редактира текста директно в таблицата (благодарение на v-model), ако забележи грешка (например печатна грешка в името), преди да цъкне "Генерирай".
+Имате ли въпроси по този код или сте готови да помислим как да реализираме финалното рисуване върху PDF-а в Django?
+готово. нека продължим
+Gemini 3.1 Pro
+Супер! Преминаваме към същинската част – генерирането на PDF файловете.
+Тъй като сертификатите се издават в България, е изключително важно да поддържаме кирилица. Стандартните шрифтове на PDF не поддържат кирилица добре, затова ще използваме външен шрифт (напр. Arial или свободен като DejaVuSans).
+1. Инсталиране на библиотеки
+Ще са ни нужни две библиотеки: reportlab (за рисуване на текста) и pypdf (за наслагване на текста върху вашия шаблон).
+bash
+pip install reportlab pypdf
+2. Подготовка на кирилски шрифт
+Създайте папка fonts във вашата Django директория (напр. до manage.py) и сложете вътре .ttf файл с шрифт, който поддържа кирилица (напр. DejaVuSans.ttf или arial.ttf). В примера ще ползваме arial.ttf.
+3. Обновяване на views.py (Логиката за генериране)
+Ще заместим стария GenerateCertificatesAPIView с реалната логика. Тя ще минава през всеки участник, ще създава прозрачен PDF с неговото име (и други данни), ще го наслагва върху шаблона и накрая ще пакетира всички сертификати в един .zip архив.
+Ето пълния код на обновения изглед:
+python
+import io
+import os
+import zipfile
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import CertificateTemplate
+from .serializers import GenerateRequestSerializer
+
+# Импорти за PDF обработка
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+from pypdf import PdfReader, PdfWriter
+
+class GenerateCertificatesAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = GenerateRequestSerializer(data=request.data)
+
+        if serializer.is_valid():
+            template_id = serializer.validated_data['template_id']
+            participants = serializer.validated_data['participants']
+
+            try:
+                template_obj = CertificateTemplate.objects.get(id=template_id)
+            except CertificateTemplate.DoesNotExist:
+                return Response({"error": "Шаблонът не е намерен."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Регистриране на кирилски шрифт (Пътят трябва да отговаря на вашия проект)
+            font_path = os.path.join(settings.BASE_DIR, 'fonts', 'arial.ttf')
+            pdfmetrics.registerFont(TTFont('Arial-Cyrillic', font_path))
+
+            # Буфер за ZIP архива
+            zip_buffer = io.BytesIO()
+
+            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                for index, participant in enumerate(participants):
+                    # Опитваме се да намерим колона за името ('Име', 'Name', 'FullName' и т.н.)
+                    name = participant.get('Име') or participant.get('Name') or f"Участник_{index+1}"
+
+                    # 1. Генериране на ПРОЗРАЧЕН PDF само с текста (чрез reportlab)
+                    packet = io.BytesIO()
+                    # Приемаме, че сертификатът е пейзажен формат (landscape A4)
+                    c = canvas.Canvas(packet, pagesize=landscape(A4))
+
+                    c.setFont('Arial-Cyrillic', 36)
+                    # Координати: (X, Y) от долния ляв ъгъл. ТРЯБВА ДА СЕ НАСТРОЯТ според шаблона!
+                    # За центриране може да се използва c.drawCentredString(x, y, text)
+                    c.drawCentredString(420, 300, str(name))
+
+                    # Добавяне на други полета, ако има такива (напр. дата)
+                    c.setFont('Arial-Cyrillic', 18)
+                    if 'Дата' in participant:
+                        c.drawString(600, 150, f"Дата: {participant['Дата']}")
+                    if 'Курс' in participant:
+                        c.drawCentredString(420, 240, str(participant['Курс']))
+
+                    c.save()
+                    packet.seek(0)
+                    text_pdf = PdfReader(packet)
+
+                    # 2. Четене на оригиналния шаблон
+                    template_pdf = PdfReader(template_obj.file.path)
+                    output = PdfWriter()
+
+                    # 3. Наслагване на текста върху първата страница на шаблона
+                    page = template_pdf.pages[0]
+                    page.merge_page(text_pdf.pages[0])
+                    output.add_page(page)
+
+                    # 4. Записване на готовия сертификат в буфер
+                    cert_buffer = io.BytesIO()
+                    output.write(cert_buffer)
+
+                    # 5. Добавяне в ZIP файла
+                    safe_name = str(name).replace(" ", "_").replace("/", "-")
+                    zip_file.writestr(f"Certificate_{safe_name}.pdf", cert_buffer.getvalue())
+
+            # Запазване на ZIP архива в media папката
+            zip_filename = 'generated_certificates.zip'
+            fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'generated'))
+
+            # Изтриваме стария архив, ако съществува
+            if fs.exists(zip_filename):
+                fs.delete(zip_filename)
+
+            fs.save(zip_filename, zip_buffer)
+
+            # Генериране на URL за изтегляне
+            download_url = f"{settings.MEDIA_URL}generated/{zip_filename}"
+
+            return Response({
+                "message": f"Успешно генерирани {len(participants)} сертификата.",
+                "download_url": download_url
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+4. Настройки в settings.py и urls.py
+За да може фронтендът да изтегли генерирания ZIP файл, Django трябва да сервира MEDIA файловете.
+В settings.py проверете дали имате:
+python
+import os
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+В основния ви urls.py (този в папката на конфигурацията) добавете накрая:
+python
+from django.conf import settings
+from django.conf.urls.static import static
+
+# ... вашите пътища ...
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+Какво се случва в този код:
+1.	Взимаме списъка с участници от фронтенда (напр. [{"Име": "Иван", "Дата": "12.05"}, {"Име": "Петър", ...}]).
+2.	За всеки участник отваряме BytesIO буфер (не запазваме временни файлове на диска, за да е по-бързо) и рисуваме името му с правилния размер и шрифт.
+3.	Отваряме PDF шаблона и "залепваме" листа с изрисуваното име отгоре (чрез merge_page).
+4.	Записваме готовия резултат в ZIP архив.
+5.	Връщаме на фронтенда линк (напр. /media/generated/generated_certificates.zip), който Vue.js автоматично ще сложи на зеления бутон "Изтегли сертификатите (ZIP)".
+Най-важната част за настройка тук са координатите: c.drawCentredString(420, 300, str(name)). Тези числа (420, 300) представляват (X, Y) пиксели от долния ляв ъгъл на листа. Ще трябва да ги нагласите пробно-грешно, докато текстът пасне идеално върху празното място на вашия конкретен дизайн на бланка.
+Това на практика завършва ядрото на дипломната работа! Искате ли да обсъдим как да добавим потребителски интерфейс (във Vue), с който администраторът да може да мести тези X и Y координати директно от браузъра, вместо да ги хардкодваме в бекенда? Това обикновено носи огромни бонус точки при защита!
+Искам да добавим потребителски интерфейс (във Vue), с който администраторът да може да мести тези X и Y координати директно от браузъра, вместо да ги хардкодваме в бекенда
+Gemini 3.1 Pro
+Това е брилянтна идея! Точно такива функционалности впечатляват комисиите на дипломните защити, защото показват гъвкавост на системата и мисъл за крайния потребител (администратора).
+Ще реализираме това чрез добавяне на панел с настройки във Vue.js, където потребителят ще може да въвежда X и Y координати (както и размер на шрифта) за различните полета. Тези данни ще се изпращат към бекенда заедно със списъка с участници.
+Ето стъпките за реализация:
+1. Обновяване на модела за данни във Vue (actions.js)
+Ще добавим нов обект textSettings в data(), който ще съхранява координатите по подразбиране, и ще го включим в заявката към сървъра.
+Намерете data() и generateCertificates() във вашия actions.js и ги обновете:
+javascript
+data() {
+    return {
+        showMode: 'home',
+        selectedFile: null,
+        participants: [],
+        templates: [],
+        selectedTemplate: null,
+        isLoading: false,
+        errorMessage: '',
+        successMessage: '',
+        downloadUrl: '',
+
+        // НОВО: Настройки за позициониране на текста
+        textSettings: {
+            name: { x: 420, y: 300, size: 36, show: true },
+            course: { x: 420, y: 240, size: 18, show: true },
+            date: { x: 600, y: 150, size: 18, show: true }
+        }
+    }
+},
+methods: {
+    // ... другите методи остават същите ...
+
+    generateCertificates() {
+        if (!this.selectedTemplate) {
+            this.errorMessage = "Моля, изберете шаблон за сертификата!";
+            return;
+        }
+        if (this.participants.length === 0) {
+            this.errorMessage = "Списъкът с участници е празен!";
+            return;
+        }
+
+        this.isLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+
+        // НОВО: Добавяме textSettings към payload-а
+        const payload = {
+            template_id: this.selectedTemplate,
+            participants: this.participants,
+            text_settings: this.textSettings
+        };
+
+        axios.post('/api/generate/', payload)
+            .then(response => {
+                this.isLoading = false;
+                this.successMessage = response.data.message;
+                this.downloadUrl = response.data.download_url;
+            })
+            .catch(error => {
+                this.isLoading = false;
+                this.errorMessage = "Възникна грешка при генерирането.";
+            });
+    },
+    // ...
+2. Добавяне на интерфейс за настройките в HTML (index.txt)
+Ще добавим нов блок в лявата колона (под бутона за качване на файл), където администраторът може да променя числата.
+Добавете следния код в лявата колона (<div class="col-4 col-12-medium">), точно под секцията за качване на файл:
+html
+<!-- НОВО: Секция за координати -->
+<section class="widget" style="margin-top: 20px;">
+    <h3>3. Настройки на текста (X/Y)</h3>
+    <p style="font-size: 0.85em; margin-bottom: 10px;">
+        Настройте позицията на елементите спрямо долния ляв ъгъл на листа.
+    </p>
+
+    <!-- Настройки за ИМЕ -->
+    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd;">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+            <input type="checkbox" v-model="textSettings.name.show"> Име на участник
+        </label>
+        <div style="display: flex; gap: 10px;" v-if="textSettings.name.show">
+            <div><small>X ос</small><input type="number" v-model="textSettings.name.x" style="width: 100%; padding: 3px;"></div>
+            <div><small>Y ос</small><input type="number" v-model="textSettings.name.y" style="width: 100%; padding: 3px;"></div>
+            <div><small>Размер</small><input type="number" v-model="textSettings.name.size" style="width: 100%; padding: 3px;"></div>
+        </div>
+    </div>
+
+    <!-- Настройки за КУРС / ТЕМА -->
+    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd;">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+            <input type="checkbox" v-model="textSettings.course.show"> Тема/Курс
+        </label>
+        <div style="display: flex; gap: 10px;" v-if="textSettings.course.show">
+            <div><small>X ос</small><input type="number" v-model="textSettings.course.x" style="width: 100%; padding: 3px;"></div>
+            <div><small>Y ос</small><input type="number" v-model="textSettings.course.y" style="width: 100%; padding: 3px;"></div>
+            <div><small>Размер</small><input type="number" v-model="textSettings.course.size" style="width: 100%; padding: 3px;"></div>
+        </div>
+    </div>
+
+    <!-- Настройки за ДАТА -->
+    <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+            <input type="checkbox" v-model="textSettings.date.show"> Дата
+        </label>
+        <div style="display: flex; gap: 10px;" v-if="textSettings.date.show">
+            <div><small>X ос</small><input type="number" v-model="textSettings.date.x" style="width: 100%; padding: 3px;"></div>
+            <div><small>Y ос</small><input type="number" v-model="textSettings.date.y" style="width: 100%; padding: 3px;"></div>
+            <div><small>Размер</small><input type="number" v-model="textSettings.date.size" style="width: 100%; padding: 3px;"></div>
+        </div>
+    </div>
+</section>
+3. Приемане на настройките в Django (serializers.py и views.py)
+Първо, в serializers.py, трябва да кажем на DRF, че очакваме новото поле text_settings:
+python
+class GenerateRequestSerializer(serializers.Serializer):
+    template_id = serializers.IntegerField()
+    participants = serializers.ListField(child=serializers.DictField())
+    # НОВО: Приемаме настройките
+    text_settings = serializers.DictField(required=False, default=dict)
+След това, във views.py, ще използваме тези динамични променливи вместо твърдо кодираните числа:
+python
+# ... частта вътре във for index, participant in enumerate(participants):
+                    packet = io.BytesIO()
+                    c = canvas.Canvas(packet, pagesize=landscape(A4))
+
+                    # Извличане на настройките от фронтенда
+                    settings = serializer.validated_data.get('text_settings', {})
+                    name_conf = settings.get('name', {'x': 420, 'y': 300, 'size': 36, 'show': True})
+                    course_conf = settings.get('course', {'x': 420, 'y': 240, 'size': 18, 'show': True})
+                    date_conf = settings.get('date', {'x': 600, 'y': 150, 'size': 18, 'show': True})
+
+                    # Рисуване на ИМЕ
+                    if name_conf.get('show'):
+                        c.setFont('Arial-Cyrillic', int(name_conf.get('size', 36)))
+                        name_text = participant.get('Име') or participant.get('Name') or f"Участник_{index+1}"
+                        # drawCentredString центрира текста спрямо X координатата
+                        c.drawCentredString(int(name_conf.get('x')), int(name_conf.get('y')), str(name_text))
+
+                    # Рисуване на КУРС / ТЕМА
+                    if course_conf.get('show') and 'Курс' in participant:
+                        c.setFont('Arial-Cyrillic', int(course_conf.get('size', 18)))
+                        c.drawCentredString(int(course_conf.get('x')), int(course_conf.get('y')), str(participant['Курс']))
+
+                    # Рисуване на ДАТА
+                    if date_conf.get('show') and 'Дата' in participant:
+                        c.setFont('Arial-Cyrillic', int(date_conf.get('size', 18)))
+                        # drawString започва текста от X координатата (не е центриран)
+                        c.drawString(int(date_conf.get('x')), int(date_conf.get('y')), f"Дата: {participant['Дата']}")
+
+                    c.save()
+# ... продължава нататък със сливането на PDF-ите ...
+Какво постигнахме?
+1.	В интерфейса се появяват чекбоксове, с които администраторът може да избира дали изобщо да се показва Името, Датата или Курса на бланката.
+2.	Под тях има полета за въвеждане на числа. Когато администраторът промени X от 420 на 200, текстът ще се премести по-наляво върху сертификата. Ако промени Y на по-голямо число, текстът ще се качи нагоре.
+3.	Добавена е и възможност за контрол на големината на шрифта (напр. ако има участници с много дълги имена, администраторът може да намали размера от 36 на 24).
+Тази гъвкавост прави вашата система напълно универсална – тя ще може да работи с абсолютно всеки дизайн на бланка, без да се налага програмист да пипа кода на бекенда!
+искам да покажем "галерия" от наличните шаблони с кратко описание и превю на самия шаблон като вместо трите бокса "завъртим" един в цикъл за всички елементи от списъка с наличните шаблони. тоест в следния фрагмент от html кода <!-- избор на шаблон --> <div id="features-wrapper"> <div class="container"> <h4>Избор на шаблон:</h4> <div class="row"> <div class="col-4 col-12-medium"> <!-- Box --> <section class="box feature"> <a href="#" class="image featured"> <img src="{% static 'images/pic01.jpg' %}" alt=""/> </a> <div class="inner"> <header> <h2>Put something here</h2> <p>Maybe here as well I think</p> </header> <p>Phasellus quam turpis, feugiat sit amet in, hendrerit in lectus. Praesent sed semper amet bibendum tristique fringilla.</p> <button class="button icon solid fa-arrow-circle-right" @click="goToGenerateMode(1)"> Генерирай с този шаблон </button> </div> </section> </div> <div class="col-4 col-12-medium"> <!-- Box --> <section class="box feature"> <a href="#" class="image featured"><img src="{% static 'images/pic02.jpg' %}" alt=""/></a> <div class="inner"> <header> <h2>An interesting title</h2> <p>This is also an interesting subtitle</p> </header> <p>Phasellus quam turpis, feugiat sit amet in, hendrerit in lectus. Praesent sed semper amet bibendum tristique fringilla.</p> </div> </section> </div> <div class="col-4 col-12-medium"> <!-- Box --> <section class="box feature"> <a href="#" class="image featured"><img src="{% static 'images/pic03.jpg' %}" alt=""/></a> <div class="inner"> <header> <h2>Oh, and finally ...</h2> <p>Here's another intriguing subtitle</p> </header> <p>Phasellus quam turpis, feugiat sit amet in, hendrerit in lectus. Praesent sed semper amet bibendum tristique fringilla.</p> </div> </section> </div> </div> </div> </div> да променим дивовете <div class="col-4 col-12-medium"> като оставим само един в цикъл за всички шаблони с превю, кратко описание и бутон за избор на този шаблон
+Gemini 3.1 Pro
+Това е класически и много правилен подход във Vue.js! Вместо да копираме HTML кода за всеки шаблон, ще използваме директивата v-for, за да създадем динамичен цикъл, който ще генерира "кутийка" за всеки обект в масива templates.
+За да реализираме това пълноценно, ще трябва леко да обновим и Django модела, за да имаме полета за картинка (превю) и описание.
+Ето как стъпка по стъпка да го направим:
+1. Обновяване на HTML кода (Vue цикъл)
+Заменете целия блок с трите статични колони във вашия HTML със следния код:
+html
+<!-- избор на шаблон -->
+<div id="features-wrapper">
+    <div class="container">
+        <h4>Избор на шаблон:</h4>
+        <div class="row">
+
+            <!-- Динамичен цикъл, който върти този div за всеки шаблон в масива templates -->
+            <div class="col-4 col-12-medium" v-for="template in templates" :key="template.id">
+                <section class="box feature">
+                    <a href="#" class="image featured">
+                        <!-- Динамично зареждане на снимката. Ако няма, ползваме примерна -->
+                        <img :src="template.preview_image ? template.preview_image : '/static/images/pic01.jpg'" :alt="template.name"/>
+                    </a>
+                    <div class="inner">
+                        <header>
+                            <!-- Име на шаблона -->
+                            <h2>[[ template.name ]]</h2>
+                        </header>
+                        <!-- Описание на шаблона -->
+                        <p>[[ template.description || 'Няма добавено описание за този дизайн.' ]]</p>
+
+                        <!-- Бутон, който извиква функцията с ID-то на конкретния шаблон -->
+                        <button class="button icon solid fa-arrow-circle-right" @click="goToGenerateMode(template.id)">
+                           Генерирай с този шаблон
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Съобщение, ако все още няма качени шаблони в базата -->
+            <div class="col-12" v-if="templates.length === 0">
+                <p style="text-align: center; color: #888;"><i>Все още няма добавени шаблони в системата.</i></p>
+            </div>
+
+        </div>
+    </div>
+</div>
+2. Какво се променя в бекенда (Django)?
+За да може Vue да вземе тези картинки и описания, трябва да ги добавим в базата данни. Влезте във вашия models.py и разширете модела CertificateTemplate:
+python
+class CertificateTemplate(models.Model):
+    name = models.CharField(max_length=255, verbose_name="Име на шаблона")
+    file = models.FileField(upload_to='templates/files/', verbose_name="Оригинален файл (PDF/Word)")
+
+    # НОВИ ПОЛЕТА ЗА ГАЛЕРИЯТА:
+    preview_image = models.ImageField(upload_to='templates/previews/', null=True, blank=True, verbose_name="Снимка за галерията (JPG/PNG)")
+    description = models.TextField(null=True, blank=True, verbose_name="Кратко описание")
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+(Не забравяйте да стартирате python manage.py makemigrations и python manage.py migrate след тази промяна, за да се обновят таблиците в базата).
+След това, в serializers.py, добавете новите полета, за да ги изпратим към фронтенда:
+python
+class TemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CertificateTemplate
+        fields = ['id', 'name', 'file', 'preview_image', 'description', 'uploaded_at']
+Как ще работи това?
+1.	Когато приложението се зареди, методът fetchTemplates() в actions.js прави GET заявка към /api/templates/.
+2.	Django връща JSON масив с всички шаблони от базата (всеки има id, name, description и URL към preview_image).
+3.	Vue получава този масив и директивата v-for="template in templates" автоматично генерира по една кутийка (box) за всеки от тях.
+4.	Когато администраторът кликне "Генерирай с този шаблон" на третата картинка, функцията @click="goToGenerateMode(template.id)" ще вземе точно нейното ID (напр. 3), ще отвори екрана за генериране и ще селектира автоматично този шаблон в падащото меню!
+Това прави интерфейсът изключително динамичен – ако утре добавите нов шаблон през Django администрацията (или през админ панел, който ще създадем), той автоматично ще се появи като нова картинка на началната страница, без да пипате и един ред HTML код!
+

@@ -16,34 +16,50 @@
                 <!-- Начален екран -->
                 <div v-if="showMode==='home'">
                     <!-- Banner -->
-                        <div id="banner-wrapper">
-                            <div id="banner" class="box container">
-                                <div class="row">
-                                    <div class="col-6 col-12-medium">
-                                        <h3>Добре дошли </h3>
-                                        <p>в системата за генериране на сертификати на базата на PDF шаблони</p>
-                                    </div>
-                                    <div class="col-6 col-12-medium"
-                                         style="display: flex; flex-direction: column; justify-content: flex-end;">
-                                        <button class="button icon solid fa-question-circle"
-                                                @click="showMode='help'">
-                                            Виж повече ...
-                                        </button>
-                                    </div>
+                    <div id="banner-wrapper">
+                        <div id="banner" class="box container">
+                            <div class="row">
+                                <div class="col-6 col-12-medium">
+                                    <h3>Добре дошли </h3>
+                                    <p>в системата за генериране на сертификати на базата на PDF шаблони</p>
+                                </div>
+                                <div class="col-6 col-12-medium"
+                                     style="display: flex; flex-direction: column; justify-content: flex-end;">
+                                    <button class="button icon solid fa-question-circle"
+                                            @click="showMode='help'">
+                                        Виж повече ...
+                                    </button>
                                 </div>
                             </div>
                         </div>
+                    </div>
                     <!-- избор на шаблон -->
+                    <div id="features-wrapper">
+                        <div class="container">
+                            <h4>Избор на шаблон:</h4>
+                            <div class="row">
+                                <!-- Динамичен цикъл, който върти този div за всеки шаблон в масива templates -->
+                                <div class="col-4 col-12-medium" v-for="template in templates" :key="template.id">
+                                    <section class="box feature">
+                                        <a href="#" class="image featured">
+                                            <!-- Динамично зареждане на снимката. Ако няма, ползваме примерна -->
+                                            <img :src="template.preview_image ? template.preview_image : '/static/images/pic01.jpg'" :alt="template.name"/>
+                                        </a>
+                                        <div class="inner">
+                                            <header>
+                                                <!-- Име на шаблона -->
+                                                <h2>[[ template.name ]]</h2>
+                                            </header>
+                                            <!-- Описание на шаблона -->
+                                            <p>[[ template.description || 'Няма добавено описание за този дизайн.' ]]</p>
 
-                                        </section>
-                                        <div style="text-align: center">
-                                            <button class="button icon solid fa-arrow-circle-up"
-                                                    @click="showMode='home'">
-                                                Затвори
+                                            <!-- Бутон, който извиква функцията с ID-то на конкретния шаблон -->
+                                            <button class="button icon solid fa-arrow-circle-right" @click="goToGenerateMode(template.id)">
+                                               Генерирай с този шаблон
                                             </button>
                                         </div>
-                                    </div>
-
+                                    </section>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -51,7 +67,6 @@
                 <!-- Kачване и генериране -->
                 <div id="main-wrapper" v-if="showMode==='upload'">
                     <div class="container">
-
                         <!-- Съобщения за грешка или успех -->
                         <div class="row" v-if="errorMessage || successMessage">
                             <div class="col-12">
@@ -67,39 +82,90 @@
                             </div>
                         </div>
 
-                        <div class="row gtr-200">
-                            <!-- Лява колона: Настройки и качване -->
-                            <div class="col-4 col-12-medium">
-                                <div id="sidebar">
+                            <div class="row gtr-200">
+                                <!-- Ред 1: Качване + Преглед -->
+                                <div class="col-4 col-12-medium">
+                                    <div id="sidebar">
+                                        <section class="widget">
+                                            <h3>1. Избор на шаблон</h3>
+                                            <select v-model="selectedTemplate" style="width: 100%; padding: 10px; margin-bottom: 20px;">
+                                                <option :value="null" disabled>-- Изберете дизайн --</option>
+                                                <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
+                                                    [[ tpl.name ]]
+                                                </option>
+                                            </select>
+
+                                            <h3>2. Списък с участници</h3>
+                                            <p>Качете .xlsx, .csv или .txt файл.</p>
+                                            <input type="file" @change="handleFileUpload" accept=".csv, .xlsx, .txt" style="margin-bottom: 10px;" />
+
+                                            <button class="button icon solid fa-upload" @click="uploadList" :disabled="isLoading">
+                                                <span v-if="!isLoading">Зареди данните</span>
+                                                <span v-else>Зареждане...</span>
+                                            </button>
+                                        </section>
+                                    </div>
+                                </div>
+
+                                <div class="col-8 col-12-medium imp-medium">
+                                    <div id="content">
+                                        <section class="last">
+                                            <h2>3. Преглед и валидация</h2>
+
+                                            <div v-if="participants.length === 0">
+                                                <p><i>Все още няма заредени данни. Моля, качете файл от менюто вляво.</i></p>
+                                            </div>
+
+                                            <div v-else>
+                                                <p>Успешно заредени <strong>[[ participants.length ]]</strong> записа. Прегледайте списъка преди генериране.</p>
+
+                                                <div style="overflow-x: auto; max-height: 400px; margin-bottom: 20px;">
+                                                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                                        <thead>
+                                                            <tr style="border-bottom: 2px solid #ccc;">
+                                                                <th>#</th>
+                                                                <th v-for="(value, key) in participants[0]" :key="key">[[ key ]]</th>
+                                                                <th>Действие</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(p, index) in participants" :key="index" style="border-bottom: 1px solid #eee;">
+                                                                <td>[[ index + 1 ]]</td>
+                                                                <td v-for="(val, key) in p" :key="key">
+                                                                    <input type="text" v-model="p[key]" style="width: 90%; padding: 5px;">
+                                                                </td>
+                                                                <td>
+                                                                    <button @click="removeParticipant(index)" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                                                                        X
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <button class="button icon solid fa-cogs" @click="generateCertificates" :disabled="isLoading">
+                                                    <span v-if="!isLoading">Генерирай сертификати</span>
+                                                    <span v-else>Генериране... моля изчакайте</span>
+                                                </button>
+                                            </div>
+                                        </section>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row gtr-200" style="margin-top: 10px;">
+                                <!-- Ред 2: Настройки + Preview -->
+                                <div class="col-6 col-12-medium">
                                     <section class="widget">
-                                        <h3>1. Избор на шаблон</h3>
-                                        <select v-model="selectedTemplate" style="width: 100%; padding: 10px; margin-bottom: 20px;">
-                                            <option :value="null" disabled>-- Изберете дизайн --</option>
-                                            <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
-                                                [[ tpl.name ]]
-                                            </option>
-                                        </select>
-
-                                        <h3>2. Списък с участници</h3>
-                                        <p>Качете .xlsx, .csv или .txt файл.</p>
-                                        <input type="file" @change="handleFileUpload" accept=".csv, .xlsx, .txt" style="margin-bottom: 10px;" />
-
-                                        <button class="button icon solid fa-upload" @click="uploadList" :disabled="isLoading">
-                                            <span v-if="!isLoading">Зареди данните</span>
-                                            <span v-else>Зареждане...</span>
-                                        </button>
-                                    </section>
-                                    <!-- Секция за координати -->
-                                    <section class="widget" style="margin-top: 20px;">
-                                        <h3>3. Настройки на текста (X/Y)</h3>
+                                        <h3>4. Настройки на текста (X/Y)</h3>
                                         <p style="font-size: 0.85em; margin-bottom: 10px;">
                                             Настройте позицията на елементите спрямо долния ляв ъгъл на листа.
                                         </p>
 
-                                        <!-- Настройки за ИМЕ -->
                                         <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd;">
                                             <label style="font-weight: bold; display: block; margin-bottom: 5px;">
-                                                <input type="checkbox" v-model="textSettings.name.show"> Име на участник
+                                                <input type="checkbox" class="app-checkbox" v-model="textSettings.name.show"> Име на участник
                                             </label>
                                             <div style="display: flex; gap: 10px;" v-if="textSettings.name.show">
                                                 <div><small>X ос</small><input type="number" v-model="textSettings.name.x" style="width: 100%; padding: 3px;"></div>
@@ -108,10 +174,9 @@
                                             </div>
                                         </div>
 
-                                        <!-- Настройки за КУРС / ТЕМА -->
                                         <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd;">
                                             <label style="font-weight: bold; display: block; margin-bottom: 5px;">
-                                                <input type="checkbox" v-model="textSettings.course.show"> Тема/Курс
+                                                <input type="checkbox" class="app-checkbox" v-model="textSettings.course.show"> Тема/Курс
                                             </label>
                                             <div style="display: flex; gap: 10px;" v-if="textSettings.course.show">
                                                 <div><small>X ос</small><input type="number" v-model="textSettings.course.x" style="width: 100%; padding: 3px;"></div>
@@ -120,10 +185,9 @@
                                             </div>
                                         </div>
 
-                                        <!-- Настройки за ДАТА -->
                                         <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
                                             <label style="font-weight: bold; display: block; margin-bottom: 5px;">
-                                                <input type="checkbox" v-model="textSettings.date.show"> Дата
+                                                <input type="checkbox" class="app-checkbox" v-model="textSettings.date.show"> Дата
                                             </label>
                                             <div style="display: flex; gap: 10px;" v-if="textSettings.date.show">
                                                 <div><small>X ос</small><input type="number" v-model="textSettings.date.x" style="width: 100%; padding: 3px;"></div>
@@ -133,56 +197,44 @@
                                         </div>
                                     </section>
                                 </div>
-                            </div>
 
-                            <!-- Дясна колона: Валидация и таблица с данни -->
-                            <div class="col-8 col-12-medium imp-medium">
-                                <div id="content">
-                                    <section class="last">
-                                        <h2>3. Преглед и валидация</h2>
+                                <div class="col-6 col-12-medium">
+                                    <section class="widget">
+                                        <h3>5. Live Preview</h3>
+                                        <p style="font-size: 0.85em; margin-bottom: 10px;">
+                                            Премествай текста с мишка (drag-and-drop) или с X/Y полетата.
+                                        </p>
 
-                                        <div v-if="participants.length === 0">
-                                            <p><i>Все още няма заредени данни. Моля, качете файл от менюто вляво.</i></p>
-                                        </div>
+                                        <div ref="previewContainer"
+                                             style="position: relative; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; background: #fff;">
+                                            <img
+                                                :src="previewImageSrc"
+                                                alt="Template preview"
+                                                style="width: 100%; display: block;"
+                                                @load="onPreviewImageLoad"
+                                            />
 
-                                        <div v-else>
-                                            <p>Успешно заредени <strong>[[ participants.length ]]</strong> записа. Прегледайте списъка преди генериране.</p>
-
-                                            <div style="overflow-x: auto; max-height: 400px; margin-bottom: 20px;">
-                                                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                                                    <thead>
-                                                        <tr style="border-bottom: 2px solid #ccc;">
-                                                            <th>#</th>
-                                                            <!-- Динамично генериране на колони според първия запис -->
-                                                            <th v-for="(value, key) in participants[0]" :key="key">[[ key ]]</th>
-                                                            <th>Действие</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr v-for="(p, index) in participants" :key="index" style="border-bottom: 1px solid #eee;">
-                                                            <td>[[ index + 1 ]]</td>
-                                                            <td v-for="(val, key) in p" :key="key">
-                                                                <input type="text" v-model="p[key]" style="width: 90%; padding: 5px;">
-                                                            </td>
-                                                            <td>
-                                                                <button @click="removeParticipant(index)" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
-                                                                    X
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
+                                            <div v-if="textSettings.name.show"
+                                                 :style="getPreviewTextStyle(textSettings.name)"
+                                                 @pointerdown="startDrag('name', $event)">
+                                                [[ previewParticipant['Име'] || previewParticipant['Name'] || 'Иван Иванов' ]]
                                             </div>
 
-                                            <button class="button icon solid fa-cogs" @click="generateCertificates" :disabled="isLoading">
-                                                <span v-if="!isLoading">Генерирай сертификати</span>
-                                                <span v-else>Генериране... моля изчакайте</span>
-                                            </button>
+                                            <div v-if="textSettings.course.show"
+                                                 :style="getPreviewTextStyle(textSettings.course)"
+                                                 @pointerdown="startDrag('course', $event)">
+                                                [[ previewParticipant['Тема'] || previewParticipant['Курс'] || 'Тема/Курс' ]]
+                                            </div>
+
+                                            <div v-if="textSettings.date.show"
+                                                 :style="getPreviewTextStyle(textSettings.date)"
+                                                 @pointerdown="startDrag('date', $event)">
+                                                [[ formatDateForPreview(previewParticipant['Дата'] || previewParticipant['Date']) ]]
+                                            </div>
                                         </div>
                                     </section>
                                 </div>
                             </div>
-                        </div>
 
                         <div style="text-align: center; margin-top: 30px;">
                             <button class="button alt icon solid fa-arrow-circle-left" @click="showMode='home'">Назад към начало</button>
@@ -235,8 +287,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
 
                 <!-- Помощ/пояснения -->
                 <div v-if="showMode==='help'">
@@ -269,203 +319,208 @@
                         </div>
                     </div>
                 </div>
-                <!-- Kачване и генериране -->
-                <div v-if="showMode==='upload'">
-                    <div class="container">
-
-                        <!-- Съобщения за грешка или успех -->
-                        <div class="row" v-if="errorMessage || successMessage">
-                            <div class="col-12">
-                                <div v-if="errorMessage" style="background: #ffdddd; color: #d8000c; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                                    <strong>Грешка:</strong> [[ errorMessage ]]
-                                </div>
-                                <div v-if="successMessage" style="background: #ddffdd; color: #4F8A10; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                                    <strong>Успех!</strong> [[ successMessage ]] <br>
-                                    <a v-if="downloadUrl" :href="downloadUrl" class="button icon solid fa-download" style="margin-top: 10px;">
-                                        Изтегли сертификатите (ZIP)
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row gtr-200">
-                            <!-- Лява колона: Настройки и качване -->
-                            <div class="col-4 col-12-medium">
-                                <div id="sidebar">
-                                    <section class="widget">
-                                        <h3>1. Избор на шаблон</h3>
-                                        <select v-model="selectedTemplate" style="width: 100%; padding: 10px; margin-bottom: 20px;">
-                                            <option :value="null" disabled>-- Изберете дизайн --</option>
-                                            <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
-                                                 Серитификат за признателност
-                                            </option>
-                                            <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
-                                                 Серитификат за участие
-                                            </option>
-                                            <option v-for="tpl in templates" :key="tpl.id" :value="tpl.id">
-                                                 Серитификат за постижение
-                                            </option>
-                                        </select>
-
-                                        <h3>2. Списък с участници</h3>
-                                        <p>Качете .xlsx, .csv или .txt файл.</p>
-                                        <input type="file" @change="handleFileUpload" accept=".csv, .xlsx, .txt" style="margin-bottom: 10px;" />
-
-                                        <button class="button icon solid fa-upload" @click="uploadList" :disabled="isLoading">
-                                            <span v-if="!isLoading">Зареди данните</span>
-                                            <span v-else>Зареждане...</span>
-                                        </button>
-                                    </section>
-                                    <!-- Секция за координати -->
-                                    <section class="widget" style="margin-top: 20px;">
-                                        <h3>3. Настройки на текста (X/Y)</h3>
-                                        <p style="font-size: 0.85em; margin-bottom: 10px;">
-                                            Настройте позицията на елементите спрямо долния ляв ъгъл на листа.
-                                        </p>
-
-                                        <!-- Настройки за ИМЕ -->
-                                        <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd;">
-                                            <label style="font-weight: bold; display: block; margin-bottom: 5px;">
-                                                <input type="checkbox" v-model="textSettings.name.show"> Име на участник
-                                            </label>
-                                            <div style="display: flex; gap: 10px;" v-if="textSettings.name.show">
-                                                <div><small>X ос</small><input type="number" v-model="textSettings.name.x" style="width: 100%; padding: 3px;"></div>
-                                                <div><small>Y ос</small><input type="number" v-model="textSettings.name.y" style="width: 100%; padding: 3px;"></div>
-                                                <div><small>Размер</small><input type="number" v-model="textSettings.name.size" style="width: 100%; padding: 3px;"></div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Настройки за КУРС / ТЕМА -->
-                                        <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd;">
-                                            <label style="font-weight: bold; display: block; margin-bottom: 5px;">
-                                                <input type="checkbox" v-model="textSettings.course.show"> Тема/Курс
-                                            </label>
-                                            <div style="display: flex; gap: 10px;" v-if="textSettings.course.show">
-                                                <div><small>X ос</small><input type="number" v-model="textSettings.course.x" style="width: 100%; padding: 3px;"></div>
-                                                <div><small>Y ос</small><input type="number" v-model="textSettings.course.y" style="width: 100%; padding: 3px;"></div>
-                                                <div><small>Размер</small><input type="number" v-model="textSettings.course.size" style="width: 100%; padding: 3px;"></div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Настройки за ДАТА -->
-                                        <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
-                                            <label style="font-weight: bold; display: block; margin-bottom: 5px;">
-                                                <input type="checkbox" v-model="textSettings.date.show"> Дата
-                                            </label>
-                                            <div style="display: flex; gap: 10px;" v-if="textSettings.date.show">
-                                                <div><small>X ос</small><input type="number" v-model="textSettings.date.x" style="width: 100%; padding: 3px;"></div>
-                                                <div><small>Y ос</small><input type="number" v-model="textSettings.date.y" style="width: 100%; padding: 3px;"></div>
-                                                <div><small>Размер</small><input type="number" v-model="textSettings.date.size" style="width: 100%; padding: 3px;"></div>
-                                            </div>
-                                        </div>
-                                    </section>
-                                </div>
-                            </div>
-
-                            <!-- Дясна колона: Валидация и таблица с данни -->
-                            <div class="col-8 col-12-medium imp-medium">
-                                <div id="content">
-                                    <section class="last">
-                                        <h2>3. Преглед и валидация</h2>
-
-                                        <div v-if="participants.length === 0">
-                                            <p><i>Все още няма заредени данни. Моля, качете файл от менюто вляво.</i></p>
-                                        </div>
-
-                                        <div v-else>
-                                            <p>Успешно заредени <strong>[[ participants.length ]]</strong> записа. Прегледайте списъка преди генериране.</p>
-
-                                            <div style="overflow-x: auto; max-height: 400px; margin-bottom: 20px;">
-                                                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                                                    <thead>
-                                                        <tr style="border-bottom: 2px solid #ccc;">
-                                                            <th>#</th>
-                                                            <!-- Динамично генериране на колони според първия запис -->
-                                                            <th v-for="(value, key) in participants[0]" :key="key">[[ key ]]</th>
-                                                            <th>Действие</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr v-for="(p, index) in participants" :key="index" style="border-bottom: 1px solid #eee;">
-                                                            <td>[[ index + 1 ]]</td>
-                                                            <td v-for="(val, key) in p" :key="key">
-                                                                <input type="text" v-model="p[key]" style="width: 90%; padding: 5px;">
-                                                            </td>
-                                                            <td>
-                                                                <button @click="removeParticipant(index)" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
-                                                                    X
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-
-                                            <button class="button icon solid fa-cogs" @click="generateCertificates" :disabled="isLoading">
-                                                <span v-if="!isLoading">Генерирай сертификати</span>
-                                                <span v-else>Генериране... моля изчакайте</span>
-                                            </button>
-                                        </div>
-                                    </section>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="text-align: center; margin-top: 30px;">
-                            <button class="button alt icon solid fa-arrow-circle-left" @click="showMode='home'">Назад към начало</button>
-                        </div>
-                    </div>
-                </div>
-                <!-- original -->
-                <div v-if="showMode===1">
-                    <div class="container">
-                        <div class="row gtr-200">
-                            <div class="col-4 col-12-medium">
-
-                                <!-- Sidebar -->
-                                    <div >
-                                        <section class="widget thumbnails">
-                                            <h3>Interesting stuff</h3>
-                                            <div class="grid">
-                                                <div class="row gtr-50">
-                                                    <div class="col-6"><a href="#" class="image fit"><img
-                                                            src="{% static 'images/pic04.jpg' %}" alt=""/></a></div>
-                                                    <div class="col-6"><a href="#" class="image fit"><img
-                                                            src="{% static 'images/pic05.jpg' %}" alt=""/></a></div>
-                                                    <div class="col-6"><a href="#" class="image fit"><img
-                                                            src="{% static 'images/pic06.jpg' %}" alt=""/></a></div>
-                                                    <div class="col-6"><a href="#" class="image fit"><img
-                                                            src="{% static 'images/pic07.jpg' %}" alt=""/></a></div>
-                                                </div>
-                                            </div>
-                                            <a href="#" class="button icon fa-file-alt">More</a>
-                                        </section>
-                                    </div>
-
-                            </div>
-                            <div class="col-8 col-12-medium imp-medium">
-
-                                <!-- Content -->
-                                    <div id="content">
-                                        <section class="last">
-                                            <h2>So what's this all about?</h2>
-                                            <p>This is <strong>Verti</strong>, a free and fully responsive HTML5 site template by
-                                                <a href="http://html5up.net">HTML5 UP</a>.
-                                            Verti is released under the
-                                                <a href="http://html5up.net/license">Creative Commons Attribution license</a>,
-                                                so feel free to use it for any personal or commercial project you might
-                                                have going on (just don't forget to credit us for the design!)</p>
-                                            <p>Phasellus quam turpis, feugiat sit amet ornare in, hendrerit in lectus.
-                                                Praesent semper bibendum ipsum, et tristique augue fringilla eu. Vivamus
-                                                id risus vel dolor auctor euismod quis eget mi. Etiam eu ante risus.
-                                                Aliquam erat volutpat. Aliquam luctus mattis lectus sit amet phasellus quam turpis.</p>
-                                            <a href="#" class="button icon solid fa-arrow-circle-right" @click="showMode='home'">Continue Reading</a>
-                                        </section>
-                                    </div>
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
+            {% endblock %}
+            {% block javascript %}
+            <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+            <script>
+const App = {
+    delimiters: ['[[', ']]'], // Променяме синтаксиса на [[ ]] заради Django шаблоните
+    data() {
+        return {
+            showMode: 'home',
+            selectedFile: null,
+            participants: [],
+            templates: [],
+            selectedTemplate: null,
+            isLoading: false,
+            errorMessage: '',
+            successMessage: '',
+            downloadUrl: '',
+
+            textSettings: {
+                name: {x: 420, y: 300, size: 36, show: true},
+                course: {x: 420, y: 240, size: 18, show: true},
+                date: {x: 600, y: 150, size: 18, show: true}
+            },
+
+            previewPdfWidth: 842,
+            previewPdfHeight: 595,
+            previewImageWidth: 0,
+            previewImageHeight: 0,
+
+            activeDragField: null,
+        }
+    },
+
+    computed: {
+        selectedTemplateObj() {
+            const selectedId = Number(this.selectedTemplate);
+            return this.templates.find(t => Number(t.id) === selectedId) || null;
+        },
+        previewScaleX() {
+            if (!this.previewImageWidth) return 1;
+            return this.previewImageWidth / this.previewPdfWidth;
+        },
+        previewScaleY() {
+            if (!this.previewImageHeight) return 1;
+            return this.previewImageHeight / this.previewPdfHeight;
+        },
+        previewParticipant() {
+            if (this.participants.length > 0) return this.participants[0];
+            return { 'Име': 'Иван Иванов', 'Тема': 'Python/Django', 'Дата': '12.04.2026' };
+        },
+        previewImageSrc() {
+            const raw = this.selectedTemplateObj?.preview_image;
+            if (!raw) return '/static/images/pic01.jpg';
+            if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('/')) return raw;
+            return `/${raw}`;
+        }
+    },
+
+    methods: {
+        fetchTemplates() {
+            axios.get('/api/templates/')
+                .then(response => {
+                    this.templates = response.data;
+                })
+                .catch(error => {
+                    console.error("Грешка при зареждане на шаблони:", error);
+                    this.errorMessage = 'Неуспешно зареждане на шаблоните.';
+                });
+        },
+
+        handleFileUpload(event) {
+            this.selectedFile = event.target.files[0];
+            this.errorMessage = '';
+        },
+
+        onPreviewImageLoad(event) {
+            this.previewImageWidth = event.target.clientWidth || event.target.naturalWidth || 0;
+            this.previewImageHeight = event.target.clientHeight || event.target.naturalHeight || 0;
+        },
+
+        getPreviewTextStyle(conf) {
+            const x = Number(conf?.x || 0) * this.previewScaleX;
+            const y = Number(conf?.y || 0) * this.previewScaleY;
+            const fontSize = Math.max(8, Number(conf?.size || 12) * ((this.previewScaleX + this.previewScaleY) / 2));
+
+            return {
+                position: 'absolute',
+                left: `${x}px`,
+                top: `${this.previewImageHeight - y}px`,
+                transform: 'translate(-50%, -50%)',
+                fontSize: `${fontSize}px`,
+                fontWeight: '700',
+                color: '#111',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8)',
+                whiteSpace: 'nowrap',
+                userSelect: 'none',
+                cursor: 'move'
+            };
+        },
+
+        startDrag(fieldName, event) {
+            this.activeDragField = fieldName;
+            window.addEventListener('pointermove', this.onDragMove);
+            window.addEventListener('pointerup', this.stopDrag);
+        },
+
+        onDragMove(event) {
+            if (!this.activeDragField) return;
+            const container = this.$refs.previewContainer;
+            if (!container) return;
+
+            const rect = container.getBoundingClientRect();
+            const relX = Math.max(0, Math.min(event.clientX - rect.left, rect.width));
+            const relY = Math.max(0, Math.min(event.clientY - rect.top, rect.height));
+
+            const pdfX = Math.round(relX / this.previewScaleX);
+            const pdfY = Math.round((rect.height - relY) / this.previewScaleY);
+
+            this.textSettings[this.activeDragField].x = pdfX;
+            this.textSettings[this.activeDragField].y = pdfY;
+        },
+
+        stopDrag() {
+            this.activeDragField = null;
+            window.removeEventListener('pointermove', this.onDragMove);
+            window.removeEventListener('pointerup', this.stopDrag);
+        },
+
+        uploadList() {
+            if (!this.selectedFile) {
+                this.errorMessage = "Моля, изберете файл първо!";
+                return;
+            }
+
+            this.isLoading = true;
+            let formData = new FormData();
+            formData.append('file', this.selectedFile);
+
+            axios.post('/api/upload-participants/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            .then(response => {
+                this.participants = response.data.data;
+                this.isLoading = false;
+            })
+            .catch(error => {
+                this.isLoading = false;
+                this.errorMessage = error.response?.data?.error || "Грешка при обработката на файла.";
+            });
+        },
+
+        removeParticipant(index) {
+            this.participants.splice(index, 1);
+        },
+
+        generateCertificates() {
+            if (!this.selectedTemplate) {
+                this.errorMessage = "Моля, изберете шаблон за сертификата!";
+                return;
+            }
+            if (this.participants.length === 0) {
+                this.errorMessage = "Списъкът с участници е празен!";
+                return;
+            }
+
+            this.isLoading = true;
+            this.errorMessage = '';
+            this.successMessage = '';
+
+            const payload = {
+                template_id: this.selectedTemplate,
+                participants: this.participants,
+                text_settings: this.textSettings
+            };
+
+            axios.post('/api/generate/', payload)
+                .then(response => {
+                    this.isLoading = false;
+                    this.successMessage = response.data.message;
+                    this.downloadUrl = response.data.download_url;
+                })
+                .catch(error => {
+                    this.isLoading = false;
+                    this.errorMessage = "Възникна грешка при генерирането.";
+                });
+        },
+
+        goToGenerateMode(templateId = null) {
+            if (templateId) {
+                this.selectedTemplate = Number(templateId);
+            }
+            this.showMode = 'upload';
+        }
+    },
+    created: function() {
+        this.showMode = 'home';
+        this.fetchTemplates();
+    }
+}
+
+Vue.createApp(App).mount('#app')
+</script>
             {% endblock %}

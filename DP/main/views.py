@@ -1,5 +1,6 @@
 from django.shortcuts import render
 import pandas as pd
+from datetime import datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
@@ -12,6 +13,7 @@ import zipfile
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from .serializers import GenerateRequestSerializer
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 # Импорти за PDF обработка
 from reportlab.pdfgen import canvas
@@ -20,8 +22,13 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from pypdf import PdfReader, PdfWriter
 
+@ensure_csrf_cookie
 def index(request):
     return render(request, 'main/index.html')
+
+@ensure_csrf_cookie
+def index_old(request):
+    return render(request, 'main/index_old.html')
 
 
 class TemplateListAPIView(generics.ListAPIView):
@@ -71,8 +78,38 @@ class UploadParticipantsAPIView(APIView):
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 class GenerateCertificatesAPIView(APIView):
+    @staticmethod
+    def _format_bg_date(value):
+        if value is None:
+            return ""
+
+        text = str(value).strip()
+        if not text:
+            return ""
+
+        patterns = [
+            "%d/%m/%Y",
+            "%d.%m.%Y",
+            "%Y-%m-%d",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S.%f",
+        ]
+
+        for pattern in patterns:
+            try:
+                dt = datetime.strptime(text, pattern)
+                return dt.strftime("%d/%m/%Y г.")
+            except ValueError:
+                continue
+
+        try:
+            dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+            return dt.strftime("%d/%m/%Y г.")
+        except ValueError:
+            return text
+
     def post(self, request, *args, **kwargs):
         serializer = GenerateRequestSerializer(data=request.data)
 
@@ -85,76 +122,64 @@ class GenerateCertificatesAPIView(APIView):
             except CertificateTemplate.DoesNotExist:
                 return Response({"error": "Шаблонът не е намерен."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Регистриране на кирилски шрифт (Пътят трябва да отговаря на вашия проект)
             font_path = os.path.join(settings.BASE_DIR, 'fonts', 'arial.ttf')
             pdfmetrics.registerFont(TTFont('Arial-Cyrillic', font_path))
 
-            # Буфер за ZIP архива
             zip_buffer = io.BytesIO()
 
             with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
                 for idx, participant in enumerate(participants):
+                    # Четем първо шаблона и взимаме реалните размери на страницата
+                    template_pdf = PdfReader(template_obj.file.path)
+                    template_page = template_pdf.pages[0]
+                    page_width = float(template_page.mediabox.width)
+                    page_height = float(template_page.mediabox.height)
+
                     packet = io.BytesIO()
-                    c = canvas.Canvas(packet, pagesize=landscape(A4))
+                    c = canvas.Canvas(packet, pagesize=(page_width, page_height))
 
-                    # Извличане на настройките от фронтенда
                     text_settings = serializer.validated_data.get('text_settings', {})
-                    name_conf = text_settings.get('name', {'x': 420, 'y': 300, 'size': 36, 'show': True})
-                    course_conf = text_settings.get('course', {'x': 420, 'y': 240, 'size': 18, 'show': True})
-                    date_conf = text_settings.get('date', {'x': 600, 'y': 150, 'size': 18, 'show': True})
+                    name_conf = text_settings.get('name', {'x': 260, 'y': 90, 'size': 36, 'show': True})
+                    course_conf = text_settings.get('course', {'x': 260, 'y': 60, 'size': 18, 'show': True})
+                    date_conf = text_settings.get('date', {'x': 260, 'y': 30, 'size': 18, 'show': True})
 
-                    # Рисуване на ИМЕ
                     if name_conf.get('show'):
                         c.setFont('Arial-Cyrillic', int(name_conf.get('size', 36)))
                         name_text = participant.get('Име') or participant.get('Name') or f"Участник_{idx + 1}"
-                        # drawCentredString центрира текста спрямо X координатата
                         c.drawCentredString(int(name_conf.get('x')), int(name_conf.get('y')), str(name_text))
 
-                    # Рисуване на КУРС / ТЕМА
                     if course_conf.get('show') and 'Тема' in participant:
                         c.setFont('Arial-Cyrillic', int(course_conf.get('size', 18)))
-                        c.drawCentredString(int(course_conf.get('x')), int(course_conf.get('y')),
-                                            str(participant['Тема']))
+                        c.drawCentredString(int(course_conf.get('x')), int(course_conf.get('y')), str(participant['Тема']))
 
-                    # Рисуване на ДАТА
-                    if date_conf.get('show') and 'Дата' in participant:
+                    raw_date = participant.get('Дата') or participant.get('Date')
+                    date_text = self._format_bg_date(raw_date)
+                    if date_conf.get('show') and date_text:
                         c.setFont('Arial-Cyrillic', int(date_conf.get('size', 18)))
-                        # drawString започва текста от X координатата (не е центриран)
-                        c.drawString(int(date_conf.get('x')), int(date_conf.get('y')), f"Дата: {participant['Дата']}")
+                        c.drawCentredString(int(date_conf.get('x')), int(date_conf.get('y')), date_text)
 
                     c.save()
-
                     packet.seek(0)
                     text_pdf = PdfReader(packet)
 
-                    # 2. Четене на оригиналния шаблон
-                    template_pdf = PdfReader(template_obj.file.path)
                     output = PdfWriter()
-
-                    # 3. Наслагване на текста върху първата страница на шаблона
-                    page = template_pdf.pages[0]
+                    page = template_page
                     page.merge_page(text_pdf.pages[0])
                     output.add_page(page)
 
-                    # 4. Записване на готовия сертификат в буфер
                     cert_buffer = io.BytesIO()
                     output.write(cert_buffer)
 
-                    # 5. Добавяне в ZIP файла
                     safe_name = str(name_text).replace(" ", "_").replace("/", "-")
                     zip_file.writestr(f"Certificate_{safe_name}.pdf", cert_buffer.getvalue())
 
-            # Запазване на ZIP архива в media папката
             zip_filename = 'generated_certificates.zip'
             fs = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'generated'))
 
-            # Изтриваме стария архив, ако съществува
             if fs.exists(zip_filename):
                 fs.delete(zip_filename)
 
             fs.save(zip_filename, zip_buffer)
-
-            # Генериране на URL за изтегляне
             download_url = f"{settings.MEDIA_URL}generated/{zip_filename}"
 
             return Response({

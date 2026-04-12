@@ -1552,6 +1552,19 @@ input, select, textarea {
 		border: 0;
 	}
 
+/* Checkbox fix за Vue настройките */
+.app-checkbox {
+	-moz-appearance: auto !important;
+	-webkit-appearance: checkbox !important;
+	-ms-appearance: auto !important;
+	appearance: auto !important;
+	width: 16px !important;
+	height: 16px !important;
+	display: inline-block !important;
+	vertical-align: middle;
+	margin-right: 8px;
+}
+
 /* Tables */
 
 	table {
