@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1
--- Време на генериране: 12 март 2026 в 12:18
+-- Време на генериране: 13 апр 2026 в 01:07
 -- Версия на сървъра: 10.4.32-MariaDB
 -- Версия на PHP: 8.2.12
 
@@ -116,7 +116,7 @@ CREATE TABLE `auth_user` (
 --
 
 INSERT INTO `auth_user` (`id`, `password`, `last_login`, `is_superuser`, `username`, `first_name`, `last_name`, `email`, `is_staff`, `is_active`, `date_joined`) VALUES
-(1, 'pbkdf2_sha256$600000$oUajD2j6zPj950Y80DK0L6$E/TjtJRTF7NxjWpYXbwaJbyjMUddk1Z3NJK5vnx/2K8=', '2026-03-12 11:02:45.517599', 1, 'user_26', '', '', '', 1, 1, '2026-02-10 01:50:41.496238');
+(1, 'pbkdf2_sha256$600000$oUajD2j6zPj950Y80DK0L6$E/TjtJRTF7NxjWpYXbwaJbyjMUddk1Z3NJK5vnx/2K8=', '2026-04-12 16:46:53.252703', 1, 'user_26', '', '', '', 1, 1, '2026-02-10 01:50:41.496238');
 
 -- --------------------------------------------------------
 
@@ -164,7 +164,9 @@ CREATE TABLE `django_admin_log` (
 --
 
 INSERT INTO `django_admin_log` (`id`, `action_time`, `object_id`, `object_repr`, `action_flag`, `change_message`, `content_type_id`, `user_id`) VALUES
-(1, '2026-03-12 11:10:43.149431', '1', 'Рожден ден', 1, '[{\"added\": {}}]', 7, 1);
+(1, '2026-03-12 11:10:43.149431', '1', 'Рожден ден', 1, '[{\"added\": {}}]', 7, 1),
+(2, '2026-04-12 21:20:59.737462', '2', 'achievment', 1, '[{\"added\": {}}]', 7, 1),
+(3, '2026-04-12 21:34:42.386320', '2', 'achievment', 2, '[{\"changed\": {\"fields\": [\"\\u0424\\u0430\\u0439\\u043b \\u043d\\u0430 \\u0448\\u0430\\u0431\\u043b\\u043e\\u043d\\u0430 (PDF/Image)\"]}}]', 7, 1);
 
 -- --------------------------------------------------------
 
@@ -247,7 +249,8 @@ CREATE TABLE `django_session` (
 --
 
 INSERT INTO `django_session` (`session_key`, `session_data`, `expire_date`) VALUES
-('fqkmr8vok18upie5cnivjgm0pv1und29', '.eJxVjEEOwiAQRe_C2hBARqxL9z0DmYEZqRpISrsy3l2bdKHb_977LxVxXUpcO89xyuqirDr8boTpwXUD-Y711nRqdZkn0puid9r12DI_r7v7d1Cwl2-dwGCyQh5OJI4Cs5eAZ0MyGO8NQRYKA4DPZECQQ3B8NJItMDsGVu8PCHc47A:1w0doT:x_pX0xvr-uo4efeFkKcB99pjurkCYYBqF1-a9cGcv1o', '2026-03-26 11:02:45.522697');
+('fqkmr8vok18upie5cnivjgm0pv1und29', '.eJxVjEEOwiAQRe_C2hBARqxL9z0DmYEZqRpISrsy3l2bdKHb_977LxVxXUpcO89xyuqirDr8boTpwXUD-Y711nRqdZkn0puid9r12DI_r7v7d1Cwl2-dwGCyQh5OJI4Cs5eAZ0MyGO8NQRYKA4DPZECQQ3B8NJItMDsGVu8PCHc47A:1w0doT:x_pX0xvr-uo4efeFkKcB99pjurkCYYBqF1-a9cGcv1o', '2026-03-26 11:02:45.522697'),
+('kjf3x9mry5sjmpqahanaye4gasye9vnu', '.eJxVjEEOwiAQRe_C2hBARqxL9z0DmYEZqRpISrsy3l2bdKHb_977LxVxXUpcO89xyuqirDr8boTpwXUD-Y711nRqdZkn0puid9r12DI_r7v7d1Cwl2-dwGCyQh5OJI4Cs5eAZ0MyGO8NQRYKA4DPZECQQ3B8NJItMDsGVu8PCHc47A:1wBxxV:JbCkM5pNRXqC8UTPlBBnEaiM4v0OpnprxYc3ZB80zuQ', '2026-04-26 16:46:53.255219');
 
 -- --------------------------------------------------------
 
@@ -269,7 +272,8 @@ CREATE TABLE `main_certificatetemplate` (
 --
 
 INSERT INTO `main_certificatetemplate` (`id`, `name`, `file`, `uploaded_at`, `description`, `preview_image`) VALUES
-(1, 'Рожден ден', 'templates/hbd.pdf', '2026-03-12 11:10:43.146315', 'snWDEWMDM QWDas:AS ASDL;Mas;sdA', 'templates/previews/s1.png');
+(1, 'Рожден ден', 'templates/hbd.pdf', '2026-03-12 11:10:43.146315', 'snWDEWMDM QWDas:AS ASDL;Mas;sdA', 'templates/previews/s1.png'),
+(2, 'achievment', 'templates/pic03_76u614y.jpg', '2026-04-12 21:20:59.736461', '', 'templates/previews/pic03_qQP2E9F.jpg');
 
 --
 -- Indexes for dumped tables
@@ -398,7 +402,7 @@ ALTER TABLE `auth_user_user_permissions`
 -- AUTO_INCREMENT for table `django_admin_log`
 --
 ALTER TABLE `django_admin_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `django_content_type`
@@ -416,7 +420,7 @@ ALTER TABLE `django_migrations`
 -- AUTO_INCREMENT for table `main_certificatetemplate`
 --
 ALTER TABLE `main_certificatetemplate`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Ограничения за дъмпнати таблици
