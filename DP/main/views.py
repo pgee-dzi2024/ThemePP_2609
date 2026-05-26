@@ -26,10 +26,6 @@ from pypdf import PdfReader, PdfWriter
 def index(request):
     return render(request, 'main/index.html')
 
-@ensure_csrf_cookie
-def index_old(request):
-    return render(request, 'main/index_old.html')
-
 
 class TemplateListAPIView(generics.ListAPIView):
     """
